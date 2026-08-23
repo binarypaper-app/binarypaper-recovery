@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "plaintext-text-note",
+  "category": "positive",
+  "title": "Plaintext mode: SHA-256 body digest, stored package, text-note restore.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 151,
+      "sha256": "fb3fdaa7afc18332c41672b39b793333e67d1a4c38813cb91bcad1d5f193936d",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-1.bpq",
+      "length": 151,
+      "sha256": "862db194222c36e387897c51972da95f94ac74f9e009bb9328c64f075459c0d5",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-2.bpq",
+      "length": 151,
+      "sha256": "32196c3e61e73eb1f929d4f202e5142513689c9a7c84e8abc2acfd656a722b88",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "stored-payload.bin",
+      "length": 219,
+      "sha256": "2ef8b7f64660f52528103a6453dd8dce73441be10c9783c44453fdb49c6ca2fc",
+      "role": "stored-payload",
+      "encoding": "binary"
+    },
+    {
+      "path": "payload-package.bin",
+      "length": 293,
+      "sha256": "3b3dc692c8174d54e7003ce2b2be0c801f70b8b6d2b1a05b2c83c098abfd5a4c",
+      "role": "payload-package",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "success",
+    "outputs": [
+      {
+        "path": "restored-content.bin",
+        "length": 39,
+        "sha256": "3ec1cd2f08843498db58d817bf3f241b5f608bd6a4f27395823921fd3b14517b",
+        "role": "restored-content",
+        "encoding": "utf-8-lf"
+      }
+    ],
+    "payloadKind": "text-note",
+    "displayName": "note.txt",
+    "capsule": {
+      "capsuleId": "31415926",
+      "erasureAlg": 1,
+      "sourceSymbolCount": 2,
+      "repairSymbolCount": 1,
+      "symbolLen": 128
+    }
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "TestVectors deterministic generator for \u0027plaintext-text-note\u0027"
+  }
+}

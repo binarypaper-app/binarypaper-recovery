@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "frame-symbol-index-out-of-range",
+  "category": "negative-frame",
+  "title": "symbol_index \u003E= K \u002B R.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 31,
+      "sha256": "a513c49b6d9b0a2f5bea463813b84fd5c83acc06c809010a2848f52ba56efc93",
+      "role": "frame",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "frame.invalid-field",
+    "stage": "frame"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "frame-minimal, mutation \u0027frame-symbol-index-out-of-range\u0027",
+    "derivedFrom": "frame-minimal",
+    "mutation": "symbol_index \u003E= K \u002B R.",
+    "crcRecomputed": true
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "frame-empty",
+  "category": "negative-frame",
+  "title": "Zero-length input.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "frame",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "frame.malformed",
+    "stage": "frame"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "frame-minimal, mutation \u0027frame-empty\u0027",
+    "derivedFrom": "frame-minimal",
+    "mutation": "Zero-length input.",
+    "crcRecomputed": false
+  }
+}

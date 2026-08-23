@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "frame-truncated-header",
+  "category": "negative-frame",
+  "title": "Cut inside the fixed header.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 10,
+      "sha256": "8c80a0d763f0984183b4b68fe92854715497abcf5604832769fb6fcdf85b2c02",
+      "role": "frame",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "frame.malformed",
+    "stage": "frame"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "frame-minimal, mutation \u0027frame-truncated-header\u0027",
+    "derivedFrom": "frame-minimal",
+    "mutation": "Cut inside the fixed header.",
+    "crcRecomputed": false
+  }
+}

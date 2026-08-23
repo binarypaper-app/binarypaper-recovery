@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "schema": "schema/vector-manifest.schema.json",
+  "vectorCount": 34,
+  "vectors": [
+    {
+      "id": "auth-modified-gcm-tag",
+      "category": "negative-authentication",
+      "manifest": "1.0/negative/auth-modified-gcm-tag/manifest.json",
+      "sha256": "26a1efd5e6de9bb98a03a2ec3ef08808237a737741505182da2d13215c0c67ea"
+    },
+    {
+      "id": "auth-plaintext-digest-mismatch",
+      "category": "negative-authentication",
+      "manifest": "1.0/negative/auth-plaintext-digest-mismatch/manifest.json",
+      "sha256": "2a2a03f691377bc57492fd416d12bc52d65e18ea3bc372c3ec9dfee9237c5d21"
+    },
+    {
+      "id": "auth-wrong-password",
+      "category": "negative-authentication",
+      "manifest": "1.0/negative/auth-wrong-password/manifest.json",
+      "sha256": "aefd9df4932163cd2c2c9a4d481e16946a69511cfa294291161af510551dbf14"
+    },
+    {
+      "id": "frame-bad-magic",
+      "category": "negative-frame",
+      "manifest": "1.0/negative/frame-bad-magic/manifest.json",
+      "sha256": "63a37081260f704f3c60821735e894d73bc078aec20c4a725161edefd36c0780"
+    },
+    {
+      "id": "frame-digest-mismatch",
+      "category": "negative-frame",
+      "manifest": "1.0/negative/frame-digest-mismatch/manifest.json",
+      "sha256": "448844e0c35450f0d697f286cc7fb542a0866fb7befcbb58b504ab2217fd2509"
+    },
+    {
+      "id": "frame-empty",
+      "category": "negative-frame",
+      "manifest": "1.0/negative/frame-empty/manifest.json",
+      "sha256": "3215ca6c202027e829c1f3759a9850999447512fdf42ca3b21d16f870e4d9c0d"
+    },
+    {
+      "id": "frame-odd-symbol-len",
+      "category": "negative-frame",
+      "manifest": "1.0/negative/frame-odd-symbol-len/manifest.json",
+      "sha256": "226a2b5ab50bd96eaa67be42e9393f5863eea99379e87e88fc152b7f2a65b0f4"
+    },
+    {
+      "id": "frame-symbol-index-out-of-range",
+      "category": "negative-frame",
+      "manifest": "1.0/negative/frame-symbol-index-out-of-range/manifest.json",
+      "sha256": "05e42c23e2296e2783aca95e178d44228493c91a416f520a32b0fa6271a1765d"
+    },
+    {
+      "id": "frame-trailing-bytes",
+      "category": "negative-frame",
+      "manifest": "1.0/negative/frame-trailing-bytes/manifest.json",
+      "sha256": "9384c16688281f7a8fc4b8b534069b567117b3e9af28f59e383d7770616a673a"
+    },
+    {
+      "id": "frame-truncated-digest",
+      "category": "negative-frame",
+      "manifest": "1.0/negative/frame-truncated-digest/manifest.json",
+      "sha256": "59dec03d366ad524965f883bd8934dfeeaec8a5a8ad81f415789b6bb5c26b7ee"
+    },
+    {
+      "id": "frame-truncated-header",
+      "category": "negative-frame",
+      "manifest": "1.0/negative/frame-truncated-header/manifest.json",
+      "sha256": "39438e247e105b2d4c0ffd60ead6787536aab35caf3ef91656305a2d8c33dfde"
+    },
+    {
+      "id": "frame-truncated-payload",
+      "category": "negative-frame",
+      "manifest": "1.0/negative/frame-truncated-payload/manifest.json",
+      "sha256": "4894ac1baa01ca4e155f715ff18df0412fc4d9bee9ab996165dbe2576d01fe17"
+    },
+    {
+      "id": "frame-unsupported-erasure-alg-future",
+      "category": "negative-frame",
+      "manifest": "1.0/negative/frame-unsupported-erasure-alg-future/manifest.json",
+      "sha256": "b22930f631e0d60775679a355d945c7e6323a9a092ca6d0c3162585133488704"
+    },
+    {
+      "id": "frame-unsupported-erasure-alg-zero",
+      "category": "negative-frame",
+      "manifest": "1.0/negative/frame-unsupported-erasure-alg-zero/manifest.json",
+      "sha256": "2c03a4dae0891ce7282afee3183b079abef9ec486c6cdabcc9866362d802135e"
+    },
+    {
+      "id": "frame-unsupported-version-future",
+      "category": "negative-frame",
+      "manifest": "1.0/negative/frame-unsupported-version-future/manifest.json",
+      "sha256": "8a2edfe4cb1e6d2cddf51b8cb0d4738c7bb015953f9cca7e57cde7b73c40e8be"
+    },
+    {
+      "id": "frame-unsupported-version-major",
+      "category": "negative-frame",
+      "manifest": "1.0/negative/frame-unsupported-version-major/manifest.json",
+      "sha256": "af6e9d8bf742c901e54827b8e9ac5a581f5235bcea2de4af85da0e89ec6ccfc5"
+    },
+    {
+      "id": "frame-unsupported-version-minor",
+      "category": "negative-frame",
+      "manifest": "1.0/negative/frame-unsupported-version-minor/manifest.json",
+      "sha256": "459f3950a8ed3316e9e76847fd26840a3b83781b88deba34a3f241305ff517c9"
+    },
+    {
+      "id": "frame-zero-source-count",
+      "category": "negative-frame",
+      "manifest": "1.0/negative/frame-zero-source-count/manifest.json",
+      "sha256": "f5b8c1620936e990350eca6717cb8a173604469de162a7f555baafa09a491015"
+    },
+    {
+      "id": "frame-zero-symbol-len",
+      "category": "negative-frame",
+      "manifest": "1.0/negative/frame-zero-symbol-len/manifest.json",
+      "sha256": "fbec06b53c55807851a77f461b59c44dcb3fe60bd7af313529e58110149d6bd9"
+    },
+    {
+      "id": "preamble-bad-magic",
+      "category": "negative-preamble",
+      "manifest": "1.0/negative/preamble-bad-magic/manifest.json",
+      "sha256": "600e85c244aef75a8b20d0a2a3927dbf6ac2672f8b5af73990a4bd6b6e16dbab"
+    },
+    {
+      "id": "preamble-body-out-of-bounds",
+      "category": "negative-preamble",
+      "manifest": "1.0/negative/preamble-body-out-of-bounds/manifest.json",
+      "sha256": "201533d55fe61a5c3d8eb63cd553229b231018555eba880ef2f86f955051de45"
+    },
+    {
+      "id": "preamble-plaintext-with-kdf",
+      "category": "negative-preamble",
+      "manifest": "1.0/negative/preamble-plaintext-with-kdf/manifest.json",
+      "sha256": "618da53ea3ec0dc7c31f66162719da239c8f8c071bb6418d80fe571ae8eac321"
+    },
+    {
+      "id": "preamble-unsupported-compression",
+      "category": "negative-preamble",
+      "manifest": "1.0/negative/preamble-unsupported-compression/manifest.json",
+      "sha256": "dafcb5c57683fd094360452df1cbbf9d02a0b6bd501724431749ab147bd7c05c"
+    },
+    {
+      "id": "preamble-zero-kdf-memory",
+      "category": "negative-preamble",
+      "manifest": "1.0/negative/preamble-zero-kdf-memory/manifest.json",
+      "sha256": "7aaf79506bae8214710243d2129763324d4da3d58b652114de437bdc69914d87"
+    },
+    {
+      "id": "recovery-insufficient-frames",
+      "category": "negative-recovery",
+      "manifest": "1.0/negative/recovery-insufficient-frames/manifest.json",
+      "sha256": "94f7c9c9c4b7ec0a4398a1a9e0be50f92e5580fd8f5e6dc560d71b25fda3480d"
+    },
+    {
+      "id": "session-duplicate-conflict",
+      "category": "negative-session",
+      "manifest": "1.0/negative/session-duplicate-conflict/manifest.json",
+      "sha256": "f75a24b89311ab495054430b9a035d492d264296bc0995e36f777deb7d0e6008"
+    },
+    {
+      "id": "session-identity-conflict",
+      "category": "negative-session",
+      "manifest": "1.0/negative/session-identity-conflict/manifest.json",
+      "sha256": "6b2232016298fb4d6a935993c09a00459e524d1c71b452d7841fa5bfb422a67c"
+    },
+    {
+      "id": "compressible-text-note",
+      "category": "positive",
+      "manifest": "1.0/positive/compressible-text-note/manifest.json",
+      "sha256": "fd19987b2dc08d7b3447c5ac11bb7ddad3cbbd0b8e77359b0d4512bd95d4fbe1"
+    },
+    {
+      "id": "encrypted-file-tree",
+      "category": "positive",
+      "manifest": "1.0/positive/encrypted-file-tree/manifest.json",
+      "sha256": "8c345bb8636b94631330b2f9570859ed8e28b97f3520aef6b8d800882044c667"
+    },
+    {
+      "id": "frame-minimal",
+      "category": "positive",
+      "manifest": "1.0/positive/frame-minimal/manifest.json",
+      "sha256": "ae6286691c04260ce59e6729dcd78216fabdc54044e700e3aec19e711c316f08"
+    },
+    {
+      "id": "incompressible-file",
+      "category": "positive",
+      "manifest": "1.0/positive/incompressible-file/manifest.json",
+      "sha256": "80f1fe4e299bb0ddb28448dc45cf592f66488a8df19811adc9cc5daeeef4bd54"
+    },
+    {
+      "id": "ldpc-round-trip",
+      "category": "positive",
+      "manifest": "1.0/positive/ldpc-round-trip/manifest.json",
+      "sha256": "061b24a2ce8a7995dd13900460f64648e2c44d424ad37f94b6ff933908d8b0f0"
+    },
+    {
+      "id": "missing-source-symbol",
+      "category": "positive",
+      "manifest": "1.0/positive/missing-source-symbol/manifest.json",
+      "sha256": "dd0ebe8846e4082ce7e94bb717316815b5d451abcdaae401e9b08bc6a841c0ab"
+    },
+    {
+      "id": "plaintext-text-note",
+      "category": "positive",
+      "manifest": "1.0/positive/plaintext-text-note/manifest.json",
+      "sha256": "6594a1217b4be172994db2399de1653adc77333231524f620fc073531668eb51"
+    }
+  ]
+}

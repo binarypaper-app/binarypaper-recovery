@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "session-duplicate-conflict",
+  "category": "negative-session",
+  "title": "Same symbol_index, different payload: the reader must not pick one.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 151,
+      "sha256": "fb3fdaa7afc18332c41672b39b793333e67d1a4c38813cb91bcad1d5f193936d",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-0-conflicting.bpq",
+      "length": 151,
+      "sha256": "a14903853cd97ddba4d6031b9acb1d0f22ee96e99b192fa4e1cc2ff9bc4bb854",
+      "role": "frame",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "session.duplicate-conflict",
+    "stage": "session"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "plaintext-text-note frame 0, one payload byte flipped, CRC recomputed",
+    "derivedFrom": "plaintext-text-note",
+    "mutation": "flip payload byte 0 of the duplicate",
+    "crcRecomputed": true
+  }
+}

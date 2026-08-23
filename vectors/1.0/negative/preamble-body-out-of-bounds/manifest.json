@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "preamble-body-out-of-bounds",
+  "category": "negative-preamble",
+  "title": "body_len declares more bytes than K * symbol_len can hold.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 151,
+      "sha256": "ed3f8841f0daf7b0385cd95dfb30ddc09f9c3eae1805fe466316704da2f13c1a",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-1.bpq",
+      "length": 151,
+      "sha256": "862db194222c36e387897c51972da95f94ac74f9e009bb9328c64f075459c0d5",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "stored-payload.bin",
+      "length": 219,
+      "sha256": "dd94088e7f78552989e030da81b80f200e0d6dd90f90644b26913ad057ac9c79",
+      "role": "stored-payload",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "preamble.body-out-of-bounds",
+    "stage": "preamble"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "stored payload mutated, then re-split into frames with fresh CRC-32C values",
+    "derivedFrom": "see notes",
+    "mutation": "body_len declares more bytes than K * symbol_len can hold.",
+    "crcRecomputed": true
+  }
+}

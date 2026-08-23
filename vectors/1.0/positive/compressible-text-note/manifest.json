@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "compressible-text-note",
+  "category": "positive",
+  "title": "LZMA path: compression_alg = 1 over a highly compressible package.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 151,
+      "sha256": "b1b0b727662289dadabf0728978d30add786f7d09e29f73a2354a659ff36f44f",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-1.bpq",
+      "length": 151,
+      "sha256": "2c0ba49febbf91cdcc2352de512a595e1e3c2b4ef77d2192798cff31ea9b56fb",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-2.bpq",
+      "length": 151,
+      "sha256": "26e1a7702fe2e07e5434390b79cd5292afa717140f23b50270929ebd6507f879",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-3.bpq",
+      "length": 151,
+      "sha256": "2db96ad4a9bbf4eeb6f2e0ebc97bed386106b8a733279f24e5bf6d875ceaa095",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "stored-payload.bin",
+      "length": 282,
+      "sha256": "5ee8e7dff9aba4d75fceeace5ef14a2c723dbe724e14c846c6856d4007979f24",
+      "role": "stored-payload",
+      "encoding": "binary"
+    },
+    {
+      "path": "payload-package.bin",
+      "length": 12042,
+      "sha256": "12815f71a5ff663d778a0dd6e855b2e221474426874ed34ee1fa4975bb42c724",
+      "role": "payload-package",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "success",
+    "outputs": [
+      {
+        "path": "restored-content.bin",
+        "length": 11776,
+        "sha256": "5cb36697d2e2c2de65fdc10069be5b8d26cb09d732460a3ca84234bf077702a9",
+        "role": "restored-content",
+        "encoding": "utf-8-lf"
+      }
+    ],
+    "payloadKind": "text-note",
+    "displayName": "repeated.txt",
+    "capsule": {
+      "capsuleId": "c03b55ed",
+      "erasureAlg": 1,
+      "sourceSymbolCount": 3,
+      "repairSymbolCount": 1,
+      "symbolLen": 128
+    }
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "TestVectors deterministic generator for \u0027compressible-text-note\u0027"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "frame-unsupported-version-major",
+  "category": "negative-frame",
+  "title": "format_major = 0 (an experimental pre-1.0 frame).",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 31,
+      "sha256": "3bb28d337309419dbb7cbc6d0dd6e4f721d88add0740782ce864d5a03afc5838",
+      "role": "frame",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "frame.unsupported-version",
+    "stage": "frame"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "frame-minimal, mutation \u0027frame-unsupported-version-major\u0027",
+    "derivedFrom": "frame-minimal",
+    "mutation": "format_major = 0 (an experimental pre-1.0 frame).",
+    "crcRecomputed": true
+  }
+}

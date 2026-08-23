@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "frame-zero-symbol-len",
+  "category": "negative-frame",
+  "title": "symbol_len = 0.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 23,
+      "sha256": "839d632339721efa2783c77451d37c5a0de3759ae643eff90112c3d651802b9a",
+      "role": "frame",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "frame.invalid-field",
+    "stage": "frame"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "hand-built frame with symbol_len = 0 and a valid CRC-32C",
+    "crcRecomputed": true
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "incompressible-file",
+  "category": "positive",
+  "title": "Stored path: compression_alg = 0 when LZMA would not shrink the package.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 6167,
+      "sha256": "04a82e282933b3803490dde1fe154162e6c3ae95aef0324a5062255e02da9172",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-1.bpq",
+      "length": 6167,
+      "sha256": "db969f7a7112374fbcc572fb82ab84bcf5a9493bb40ee224126c536b680e27ef",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-2.bpq",
+      "length": 6167,
+      "sha256": "4e6a20af46f983b09fab0ffefa2dda47920b510ddec285939e976de686a7e562",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "stored-payload.bin",
+      "length": 10563,
+      "sha256": "cd3d8fffe78b16a28f28a2b3806daf81f28cd36987dffe0e6130aabac8e84aad",
+      "role": "stored-payload",
+      "encoding": "binary"
+    },
+    {
+      "path": "payload-package.bin",
+      "length": 10500,
+      "sha256": "2633702faf150d1f9c8793565dbd94c0b779ca1cbc556a4c7874d048e0b0ee52",
+      "role": "payload-package",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "success",
+    "outputs": [
+      {
+        "path": "restored-content.bin",
+        "length": 10240,
+        "sha256": "80d5bc2066f4730af1a3cbae56163774af00be3249a1eae439f432e2e963f3c5",
+        "role": "restored-content",
+        "encoding": "binary"
+      }
+    ],
+    "payloadKind": "single-file",
+    "displayName": "random.bin",
+    "capsule": {
+      "capsuleId": "1ced570e",
+      "erasureAlg": 1,
+      "sourceSymbolCount": 2,
+      "repairSymbolCount": 1,
+      "symbolLen": 6144
+    }
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "TestVectors deterministic generator for \u0027incompressible-file\u0027"
+  }
+}

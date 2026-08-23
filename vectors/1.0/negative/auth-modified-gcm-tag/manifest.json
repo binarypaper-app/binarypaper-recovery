@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "auth-modified-gcm-tag",
+  "category": "negative-authentication",
+  "title": "Final ciphertext byte flipped; the GCM tag no longer verifies.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 279,
+      "sha256": "fa63da7421b74adb679716fcad67160d4f0659898051008ff64ab3d6118f6174",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-1.bpq",
+      "length": 279,
+      "sha256": "bf89b97a2925a620ca9a157ff73f0132d7e9441f6a9d7d8ec80f831187ee64ef",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "stored-payload.bin",
+      "length": 274,
+      "sha256": "f6da153677d26085e05997b440504f86d807e96002b54ab21b4d8ffc7735b081",
+      "role": "stored-payload",
+      "encoding": "binary"
+    }
+  ],
+  "password": {
+    "kind": "public-test-value",
+    "value": "paper vault test",
+    "note": "Published test data. Deliberately not an example of a good password."
+  },
+  "expected": {
+    "result": "auth.failed",
+    "stage": "authentication"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "stored payload mutated, then re-split into frames with fresh CRC-32C values",
+    "derivedFrom": "see notes",
+    "mutation": "Final ciphertext byte flipped; the GCM tag no longer verifies.",
+    "crcRecomputed": true
+  }
+}

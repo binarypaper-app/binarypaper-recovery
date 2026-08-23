@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "encrypted-file-tree",
+  "category": "positive",
+  "title": "Encrypted mode: Argon2id, AES-256-GCM, multi-entry file tree.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 279,
+      "sha256": "fa63da7421b74adb679716fcad67160d4f0659898051008ff64ab3d6118f6174",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-1.bpq",
+      "length": 279,
+      "sha256": "1235ca1a1cd4a446a0231e712320a44412a509fec4af9f43215f2e8ba785eb55",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-2.bpq",
+      "length": 279,
+      "sha256": "bf15c007d8dc5260b0c004837e40ba36049a9316b9189537a0279dec623f5651",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "stored-payload.bin",
+      "length": 274,
+      "sha256": "c0e1278eeb4a07e0bc931a1a7366f60828616afc0cb8224fb88efc1f7e9909c8",
+      "role": "stored-payload",
+      "encoding": "binary"
+    },
+    {
+      "path": "payload-package.bin",
+      "length": 401,
+      "sha256": "4966febe37c15a7b285bd4505ea475dd189bdaa691636c3036fc7503f29c9acc",
+      "role": "payload-package",
+      "encoding": "binary"
+    }
+  ],
+  "password": {
+    "kind": "public-test-value",
+    "value": "paper vault test",
+    "note": "Published test data. Deliberately not an example of a good password."
+  },
+  "expected": {
+    "result": "success",
+    "outputs": [
+      {
+        "path": "restored-content.bin",
+        "length": 401,
+        "sha256": "4966febe37c15a7b285bd4505ea475dd189bdaa691636c3036fc7503f29c9acc",
+        "role": "restored-content",
+        "encoding": "binary"
+      }
+    ],
+    "payloadKind": "file-tree",
+    "displayName": "sample-bundle",
+    "capsule": {
+      "capsuleId": "deadbeef",
+      "erasureAlg": 1,
+      "sourceSymbolCount": 2,
+      "repairSymbolCount": 1,
+      "symbolLen": 256
+    }
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "TestVectors deterministic generator for \u0027encrypted-file-tree\u0027"
+  }
+}

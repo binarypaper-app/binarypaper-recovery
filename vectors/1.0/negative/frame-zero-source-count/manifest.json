@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "frame-zero-source-count",
+  "category": "negative-frame",
+  "title": "source_symbol_count = 0.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 31,
+      "sha256": "da0959f7c5f47ce1825603eec0628b0265303c9cc4b4ef341053eda566a60701",
+      "role": "frame",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "frame.invalid-field",
+    "stage": "frame"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "frame-minimal, mutation \u0027frame-zero-source-count\u0027",
+    "derivedFrom": "frame-minimal",
+    "mutation": "source_symbol_count = 0.",
+    "crcRecomputed": true
+  }
+}

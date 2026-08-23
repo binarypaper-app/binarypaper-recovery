@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "frame-odd-symbol-len",
+  "category": "negative-frame",
+  "title": "symbol_len is odd; GF(2^16) reads 16-bit words.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 30,
+      "sha256": "ac81b423e1a804e560470b70233fc6aac3e97b66a6cb4bec8b7dd1aaa80cdc1e",
+      "role": "frame",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "frame.invalid-field",
+    "stage": "frame"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "hand-built frame with symbol_len = 7 and a valid CRC-32C",
+    "crcRecomputed": true
+  }
+}

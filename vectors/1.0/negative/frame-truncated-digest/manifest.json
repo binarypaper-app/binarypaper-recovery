@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "frame-truncated-digest",
+  "category": "negative-frame",
+  "title": "Cut inside the trailing CRC-32C.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 29,
+      "sha256": "3d9c751130bec9e4ea1d5c549c8fc7ce491518ed6040bef227f34c68267e0055",
+      "role": "frame",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "frame.malformed",
+    "stage": "frame"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "frame-minimal, mutation \u0027frame-truncated-digest\u0027",
+    "derivedFrom": "frame-minimal",
+    "mutation": "Cut inside the trailing CRC-32C.",
+    "crcRecomputed": false
+  }
+}

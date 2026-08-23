@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "session-identity-conflict",
+  "category": "negative-session",
+  "title": "Two frames share capsule_id but disagree on symbol_len.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 151,
+      "sha256": "fb3fdaa7afc18332c41672b39b793333e67d1a4c38813cb91bcad1d5f193936d",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-1.bpq",
+      "length": 151,
+      "sha256": "c9da29b6d076be61616136026c54210eec0b87f37c3b92c76ade0cb7d93d54c2",
+      "role": "frame",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "session.identity-conflict",
+    "stage": "session"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "plaintext-text-note frames 0 and 1; frame 1 symbol_len altered",
+    "derivedFrom": "plaintext-text-note",
+    "mutation": "repair_symbol_count 1 -\u003E 9 on the second frame",
+    "crcRecomputed": true
+  }
+}

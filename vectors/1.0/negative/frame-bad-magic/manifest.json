@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "frame-bad-magic",
+  "category": "negative-frame",
+  "title": "Magic is not BPQR.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 31,
+      "sha256": "37a756087bcc33dbc898d5438a31fc303035a890ced585c36b0ede5216c0a9eb",
+      "role": "frame",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "frame.malformed",
+    "stage": "frame"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "frame-minimal, mutation \u0027frame-bad-magic\u0027",
+    "derivedFrom": "frame-minimal",
+    "mutation": "Magic is not BPQR.",
+    "crcRecomputed": true
+  }
+}

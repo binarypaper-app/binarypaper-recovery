@@ -1,0 +1,242 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://binarypaper.app/schemas/recovery/vector-manifest-1.json",
+  "title": "BinaryPaper conformance vector manifest",
+  "description": "Describes one conformance vector: its inputs, the operation to perform, and the exact expected outcome. Language-neutral: paths always use '/', every external file is hashed, and unknown properties are rejected so a typo fails loudly instead of silently disabling a check.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "protocol", "id", "category", "operation", "inputs", "expected"],
+  "properties": {
+    "schemaVersion": {
+      "description": "Version of this schema. Incremented only for a breaking change to the manifest shape.",
+      "type": "integer",
+      "const": 1
+    },
+    "protocol": {
+      "description": "The capsule wire version this vector exercises.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["formatMajor", "formatMinor"],
+      "properties": {
+        "formatMajor": { "type": "integer", "minimum": 0, "maximum": 255 },
+        "formatMinor": { "type": "integer", "minimum": 0, "maximum": 255 }
+      }
+    },
+    "id": {
+      "description": "Stable identifier, unique across the suite. Never reused for different bytes.",
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9.]+)*$",
+      "minLength": 3,
+      "maxLength": 100
+    },
+    "category": {
+      "description": "What this vector is for. 'positive' expects success; every other value is a family of expected rejections.",
+      "type": "string",
+      "enum": [
+        "positive",
+        "negative-frame",
+        "negative-session",
+        "negative-profile",
+        "negative-recovery",
+        "negative-preamble",
+        "negative-authentication",
+        "negative-compression",
+        "negative-package",
+        "negative-output"
+      ]
+    },
+    "title": {
+      "description": "One-line human summary. Informative; never a substitute for the specification.",
+      "type": "string",
+      "maxLength": 200
+    },
+    "operation": {
+      "description": "What an implementation should do with the inputs. 'recover' runs the full pipeline to restored bytes; 'inspect' stops before authentication and reports public metadata only.",
+      "type": "string",
+      "enum": ["recover", "inspect"]
+    },
+    "inputs": {
+      "description": "Every input file, in the order they should be presented. Ordering matters for session and duplicate cases.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/file" }
+    },
+    "password": {
+      "description": "Test password for an encrypted vector. Absent means no password is supplied.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "value"],
+      "properties": {
+        "kind": {
+          "description": "Always 'public-test-value'. These are published test data and are deliberately not examples of good passwords.",
+          "type": "string",
+          "const": "public-test-value"
+        },
+        "value": { "type": "string" },
+        "note": { "type": "string", "maxLength": 300 }
+      }
+    },
+    "expected": {
+      "description": "The exact required outcome. A conforming implementation matches this or fails the vector.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result"],
+      "properties": {
+        "result": {
+          "description": "'success' or the stable failure category from the protocol specification.",
+          "type": "string",
+          "anyOf": [
+            { "const": "success" },
+            { "$ref": "#/$defs/failureCategory" }
+          ]
+        },
+        "stage": {
+          "description": "The validation stage at which a rejection occurs. Required for every failure; forbidden for success. Rejecting at the wrong stage is a conformance defect even when the input is correctly rejected.",
+          "$ref": "#/$defs/stage"
+        },
+        "outputs": {
+          "description": "For a successful recovery, the exact restored artifacts.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/file" }
+        },
+        "payloadKind": {
+          "description": "The restored payload kind, for a successful recovery.",
+          "type": "string",
+          "enum": ["text-note", "single-file", "file-tree"]
+        },
+        "displayName": {
+          "description": "The manifest display name, for a successful recovery.",
+          "type": "string"
+        },
+        "capsule": {
+          "description": "Public frame/session metadata a reader must report identically.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "capsuleId": { "$ref": "#/$defs/hex8" },
+            "erasureAlg": { "type": "integer", "enum": [1, 2] },
+            "sourceSymbolCount": { "type": "integer", "minimum": 1, "maximum": 65535 },
+            "repairSymbolCount": { "type": "integer", "minimum": 0, "maximum": 65535 },
+            "symbolLen": { "type": "integer", "minimum": 2, "maximum": 65534 }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "result": { "const": "success" } }, "required": ["result"] },
+          "then": { "not": { "required": ["stage"] } },
+          "else": { "required": ["stage"] }
+        }
+      ]
+    },
+    "provenance": {
+      "description": "How these bytes came to exist, so they can be regenerated or audited rather than trusted.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "generator": { "type": "string" },
+        "recipe": {
+          "description": "Deterministic steps that reproduce the inputs.",
+          "type": "string"
+        },
+        "derivedFrom": {
+          "description": "For a negative vector, the positive vector id it was mutated from.",
+          "type": "string"
+        },
+        "mutation": {
+          "description": "The exact mutation applied, including whether the CRC-32C was recomputed. Recomputing is required whenever the intended failure stage is after the frame-digest check.",
+          "type": "string"
+        },
+        "crcRecomputed": {
+          "description": "Whether the frame digest was recomputed after mutation. A vector that intends to fail after stage 3 must set this true, or it silently tests the CRC check instead.",
+          "type": "boolean"
+        }
+      }
+    },
+    "notes": { "type": "string", "maxLength": 2000 }
+  },
+  "$defs": {
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "length", "sha256"],
+      "properties": {
+        "path": {
+          "description": "Path relative to the manifest's own directory. Always '/' separated, on every host platform.",
+          "type": "string",
+          "pattern": "^[^/\\\\][^\\\\]*$",
+          "maxLength": 300
+        },
+        "length": { "type": "integer", "minimum": 0 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "role": {
+          "description": "What this file is, for readability. Informative.",
+          "type": "string",
+          "enum": [
+            "frame",
+            "stored-payload",
+            "payload-package",
+            "restored-content",
+            "page-image"
+          ]
+        },
+        "encoding": {
+          "description": "For a text artifact, its exact byte semantics. Text fixtures are byte artifacts, not platform-native text files.",
+          "type": "string",
+          "enum": ["utf-8-lf", "binary"]
+        }
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "hex8": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}$"
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "frame",
+        "session",
+        "profile",
+        "recovery",
+        "preamble",
+        "authentication",
+        "compression",
+        "package",
+        "output"
+      ]
+    },
+    "failureCategory": {
+      "type": "string",
+      "enum": [
+        "frame.malformed",
+        "frame.unsupported-version",
+        "frame.unsupported-algorithm",
+        "frame.invalid-field",
+        "frame.digest-mismatch",
+        "session.identity-conflict",
+        "session.duplicate-conflict",
+        "session.multiple-capsules",
+        "profile.out-of-range",
+        "resource.policy-refused",
+        "recovery.insufficient-frames",
+        "recovery.incomplete",
+        "preamble.malformed",
+        "preamble.invalid-algorithm",
+        "preamble.invalid-parameter",
+        "preamble.body-out-of-bounds",
+        "auth.failed",
+        "auth.digest-mismatch",
+        "compression.malformed",
+        "package.malformed",
+        "package.invalid-entry",
+        "package.manifest-invalid",
+        "output.unsafe-destination",
+        "io.failed"
+      ]
+    }
+  }
+}

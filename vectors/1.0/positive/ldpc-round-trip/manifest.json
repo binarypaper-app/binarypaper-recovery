@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "ldpc-round-trip",
+  "category": "positive",
+  "title": "LDPC-Staircase: seed derived from capsule_id, decoder-reported completion.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 57,
+      "sha256": "00fd7cb7822fd4845dffc8db1940a45fdf31685083df09f3a5eb3ca65f2c2b8d",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-1.bpq",
+      "length": 57,
+      "sha256": "2e32d089a327659d0d3db9416e63776bf47dbe803e3a8e109cd61dce2fd33017",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-2.bpq",
+      "length": 57,
+      "sha256": "b00ae4f94865f4fd2d47d0129407b293484f721bc831a4aa12a0e0c8c3c096d4",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-3.bpq",
+      "length": 57,
+      "sha256": "bc90f7e5592227a75658abf1379d45ae604bcc1cf3e20e1e9b03d96fb60d7753",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-4.bpq",
+      "length": 57,
+      "sha256": "e1d585356d2df876d025ff25838280b395e2ada31fd72d3c06b1ef104c0b3748",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-5.bpq",
+      "length": 57,
+      "sha256": "78da65a1c809e24b0e243d858546a8471388e3dea87248ba5059f6155878d8ee",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-6.bpq",
+      "length": 57,
+      "sha256": "b7534306a8fb2c47e52dd3ac8b64387a8699dc169e4300dde7470189fb5a2886",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-7.bpq",
+      "length": 57,
+      "sha256": "6f0f3af122aad645bf447d0d65c46577e1cf77fa6cf383e9505a8a0c303f5c00",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-8.bpq",
+      "length": 57,
+      "sha256": "623faf6f9036e01b09cb7b8727891ca7a0f44895d542a5fdeb880c967d51e009",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-9.bpq",
+      "length": 57,
+      "sha256": "3535526b7ca74927dc083c8d61748a6d9da27a189ddc57833209a67ce4fe0c4d",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-10.bpq",
+      "length": 57,
+      "sha256": "1787b77120231d64aea6b6ea405b09839a3722e2dd8c6f8af831789c8c80801f",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-11.bpq",
+      "length": 57,
+      "sha256": "56dd487befc2040883c953c6d458a35714c375965901f2e6102e7b4306fea255",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-12.bpq",
+      "length": 57,
+      "sha256": "f277dd0982468635a870f6a1e57e0736110f6f739922c3d1ef60aafac620c79b",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-13.bpq",
+      "length": 57,
+      "sha256": "e2d2177fc0f4e57e93268a8fe05d6c95c16239f45d92f8e24076eb27650be6c1",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-14.bpq",
+      "length": 57,
+      "sha256": "d9c1f03803831933f89e4f5f6b260fbc0b1c2a5c00323a14a5f6086af8c420e9",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-15.bpq",
+      "length": 57,
+      "sha256": "e402e93e9364303ec8fb64f690626df55dbb90903875b2f4254d12d960ac0cb1",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "stored-payload.bin",
+      "length": 257,
+      "sha256": "448f8c00679729add93bf2966f235c45ed765df64b383fd4a4679ad8ffbecca9",
+      "role": "stored-payload",
+      "encoding": "binary"
+    },
+    {
+      "path": "payload-package.bin",
+      "length": 1589,
+      "sha256": "2133e324aeffeed2a4d62debaabafaba661fdf8ce34052d27d0e2909fb839a91",
+      "role": "payload-package",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "success",
+    "outputs": [
+      {
+        "path": "restored-content.bin",
+        "length": 1320,
+        "sha256": "9e17d5eb849be9bc2237a18c411b12f7cbca3d483628460769eaa2fd9aa10b32",
+        "role": "restored-content",
+        "encoding": "utf-8-lf"
+      }
+    ],
+    "payloadKind": "text-note",
+    "displayName": "ldpc-note.txt",
+    "capsule": {
+      "capsuleId": "05050505",
+      "erasureAlg": 2,
+      "sourceSymbolCount": 8,
+      "repairSymbolCount": 8,
+      "symbolLen": 34
+    }
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "TestVectors deterministic generator for \u0027ldpc-round-trip\u0027"
+  }
+}

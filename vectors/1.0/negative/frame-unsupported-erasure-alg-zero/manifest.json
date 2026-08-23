@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "frame-unsupported-erasure-alg-zero",
+  "category": "negative-frame",
+  "title": "erasure_alg = 0, the reserved never-valid value.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 31,
+      "sha256": "fe8163f82867638867c1cc022742f208ea5930cb13acdfa898ef5f360e0fb7a4",
+      "role": "frame",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "frame.unsupported-algorithm",
+    "stage": "frame"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "frame-minimal, mutation \u0027frame-unsupported-erasure-alg-zero\u0027",
+    "derivedFrom": "frame-minimal",
+    "mutation": "erasure_alg = 0, the reserved never-valid value.",
+    "crcRecomputed": true
+  }
+}

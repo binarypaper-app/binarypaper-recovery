@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "frame-unsupported-erasure-alg-future",
+  "category": "negative-frame",
+  "title": "erasure_alg = 3, unassigned.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 31,
+      "sha256": "8a172b2576eb40299916f56c042fc40eb9451a85117079845b10d424ae994722",
+      "role": "frame",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "frame.unsupported-algorithm",
+    "stage": "frame"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "frame-minimal, mutation \u0027frame-unsupported-erasure-alg-future\u0027",
+    "derivedFrom": "frame-minimal",
+    "mutation": "erasure_alg = 3, unassigned.",
+    "crcRecomputed": true
+  }
+}

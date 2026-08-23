@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "frame-unsupported-version-future",
+  "category": "negative-frame",
+  "title": "A future version this reader cannot honour.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 31,
+      "sha256": "eb68e70cee4fa1952668ee0e9d3a551b14b9fc6b8c4a45c90a4e4a492df4c5f3",
+      "role": "frame",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "frame.unsupported-version",
+    "stage": "frame"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "frame-minimal, mutation \u0027frame-unsupported-version-future\u0027",
+    "derivedFrom": "frame-minimal",
+    "mutation": "A future version this reader cannot honour.",
+    "crcRecomputed": true
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "frame-digest-mismatch",
+  "category": "negative-frame",
+  "title": "One payload byte flipped, CRC left stale.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 31,
+      "sha256": "98e5c576d99646b8c609b19bce4278675047e875c040c92539c19a12c7770949",
+      "role": "frame",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "frame.digest-mismatch",
+    "stage": "frame"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "frame-minimal, mutation \u0027frame-digest-mismatch\u0027",
+    "derivedFrom": "frame-minimal",
+    "mutation": "One payload byte flipped, CRC left stale.",
+    "crcRecomputed": false
+  }
+}

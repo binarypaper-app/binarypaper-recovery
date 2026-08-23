@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "frame-truncated-payload",
+  "category": "negative-frame",
+  "title": "Cut inside symbol_payload.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 25,
+      "sha256": "b75d65161820e4a1ec97b99fea3a1c8ce566957f1c6b6e8b91cd90cc2c3ce97e",
+      "role": "frame",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "frame.malformed",
+    "stage": "frame"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "frame-minimal, mutation \u0027frame-truncated-payload\u0027",
+    "derivedFrom": "frame-minimal",
+    "mutation": "Cut inside symbol_payload.",
+    "crcRecomputed": false
+  }
+}

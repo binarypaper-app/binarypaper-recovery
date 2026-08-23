@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "preamble-zero-kdf-memory",
+  "category": "negative-preamble",
+  "title": "kdf_memory_kib = 0 must be refused before Argon2id runs.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 279,
+      "sha256": "100a56e5d1312c0962364a852505114c1a2f0e61e8aacbf6e14c673d525ee96e",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "frame-1.bpq",
+      "length": 279,
+      "sha256": "1235ca1a1cd4a446a0231e712320a44412a509fec4af9f43215f2e8ba785eb55",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "stored-payload.bin",
+      "length": 274,
+      "sha256": "47bda7ebd755d5adafefd5cec4f7f2f5eb16172b666cb1ae66873b39d239380c",
+      "role": "stored-payload",
+      "encoding": "binary"
+    }
+  ],
+  "password": {
+    "kind": "public-test-value",
+    "value": "paper vault test",
+    "note": "Published test data. Deliberately not an example of a good password."
+  },
+  "expected": {
+    "result": "preamble.invalid-parameter",
+    "stage": "preamble"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "stored payload mutated, then re-split into frames with fresh CRC-32C values",
+    "derivedFrom": "see notes",
+    "mutation": "kdf_memory_kib = 0 must be refused before Argon2id runs.",
+    "crcRecomputed": true
+  }
+}
