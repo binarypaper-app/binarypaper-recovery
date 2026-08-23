@@ -1,11 +1,19 @@
-# Conformance fixtures are byte artifacts. Git must never translate their bytes.
+# Order matters: the LAST matching pattern wins, so the catch-all comes first and the
+# specific binary rules override it.
+
+# Everything is text with LF in the repository unless overridden below.
+* text=auto eol=lf
+
+# Conformance fixtures are byte artifacts. Git must never translate their bytes: every
+# one of them is covered by a SHA-256 in a manifest, so a line-ending rewrite on checkout
+# would make the suite fail for whoever cloned it.
 *.bpq binary
 *.bin binary
+*.zip binary
 *.png binary
 *.jpg binary
-*.zip binary
 vectors/**/restored-*.txt binary
-vectors/**/*.json -text
 
-# Everything else is normal text with LF in the repository.
-* text=auto eol=lf
+# Manifests are hashed too, but they must stay readable and diffable, so they are text
+# pinned to LF rather than binary. The generator emits LF on every platform to match.
+vectors/**/*.json text eol=lf

@@ -11,205 +11,205 @@
       "id": "auth-modified-gcm-tag",
       "category": "negative-authentication",
       "manifest": "1.0/negative/auth-modified-gcm-tag/manifest.json",
-      "sha256": "26a1efd5e6de9bb98a03a2ec3ef08808237a737741505182da2d13215c0c67ea"
+      "sha256": "8c59d8964b9d3618bfda62303b769e7a0c2729d11dd9f0c68e12202682327c8e"
     },
     {
       "id": "auth-plaintext-digest-mismatch",
       "category": "negative-authentication",
       "manifest": "1.0/negative/auth-plaintext-digest-mismatch/manifest.json",
-      "sha256": "2a2a03f691377bc57492fd416d12bc52d65e18ea3bc372c3ec9dfee9237c5d21"
+      "sha256": "2aee7a4795692544f44d14c109e73400e3cfcd2cde0f940a247124fbceeb60dc"
     },
     {
       "id": "auth-wrong-password",
       "category": "negative-authentication",
       "manifest": "1.0/negative/auth-wrong-password/manifest.json",
-      "sha256": "aefd9df4932163cd2c2c9a4d481e16946a69511cfa294291161af510551dbf14"
+      "sha256": "903866748168f84302d65d0da5a63418521716d81f4e8485ddb7a78657fd4ec0"
     },
     {
       "id": "frame-bad-magic",
       "category": "negative-frame",
       "manifest": "1.0/negative/frame-bad-magic/manifest.json",
-      "sha256": "63a37081260f704f3c60821735e894d73bc078aec20c4a725161edefd36c0780"
+      "sha256": "f3c79ac13161294937eba1806cb2aba2015a210c352a09aa76306c5b5325eda7"
     },
     {
       "id": "frame-digest-mismatch",
       "category": "negative-frame",
       "manifest": "1.0/negative/frame-digest-mismatch/manifest.json",
-      "sha256": "448844e0c35450f0d697f286cc7fb542a0866fb7befcbb58b504ab2217fd2509"
+      "sha256": "7dce3e31a8f59933008e06fc6a50d1223999fb71c99113457895cbf834cbccc7"
     },
     {
       "id": "frame-empty",
       "category": "negative-frame",
       "manifest": "1.0/negative/frame-empty/manifest.json",
-      "sha256": "3215ca6c202027e829c1f3759a9850999447512fdf42ca3b21d16f870e4d9c0d"
+      "sha256": "d345a98697fa389edfd54383c03c72b3b094068b1d6200644569f589be2143c1"
     },
     {
       "id": "frame-odd-symbol-len",
       "category": "negative-frame",
       "manifest": "1.0/negative/frame-odd-symbol-len/manifest.json",
-      "sha256": "226a2b5ab50bd96eaa67be42e9393f5863eea99379e87e88fc152b7f2a65b0f4"
+      "sha256": "b054afbb13c3ec1f857e76dbab77736d9a23d51a1d6760e8804bd7365bd12cc4"
     },
     {
       "id": "frame-symbol-index-out-of-range",
       "category": "negative-frame",
       "manifest": "1.0/negative/frame-symbol-index-out-of-range/manifest.json",
-      "sha256": "05e42c23e2296e2783aca95e178d44228493c91a416f520a32b0fa6271a1765d"
+      "sha256": "f8ced001ec39cb93c9355f0368fa473df9f52a20a027affe15549bdb33993df4"
     },
     {
       "id": "frame-trailing-bytes",
       "category": "negative-frame",
       "manifest": "1.0/negative/frame-trailing-bytes/manifest.json",
-      "sha256": "9384c16688281f7a8fc4b8b534069b567117b3e9af28f59e383d7770616a673a"
+      "sha256": "d7f87f62b21fb69b6147d481d30b1a1642dad51ddeeeba3cf0bdf20184e19464"
     },
     {
       "id": "frame-truncated-digest",
       "category": "negative-frame",
       "manifest": "1.0/negative/frame-truncated-digest/manifest.json",
-      "sha256": "59dec03d366ad524965f883bd8934dfeeaec8a5a8ad81f415789b6bb5c26b7ee"
+      "sha256": "4dd9da6d7f2cfd4e72e274beb57094776a3960206e451e6e8b97bde608e5c6d2"
     },
     {
       "id": "frame-truncated-header",
       "category": "negative-frame",
       "manifest": "1.0/negative/frame-truncated-header/manifest.json",
-      "sha256": "39438e247e105b2d4c0ffd60ead6787536aab35caf3ef91656305a2d8c33dfde"
+      "sha256": "3ed9c57261e6e9496adcc1076e1c4bdb745afd1a9db3b0a94e5c1d5b64e86751"
     },
     {
       "id": "frame-truncated-payload",
       "category": "negative-frame",
       "manifest": "1.0/negative/frame-truncated-payload/manifest.json",
-      "sha256": "4894ac1baa01ca4e155f715ff18df0412fc4d9bee9ab996165dbe2576d01fe17"
+      "sha256": "a1b27baa8064b8e0b3ac94c52bed30d1a26cf34597c18f629cdda51f4f4537c6"
     },
     {
       "id": "frame-unsupported-erasure-alg-future",
       "category": "negative-frame",
       "manifest": "1.0/negative/frame-unsupported-erasure-alg-future/manifest.json",
-      "sha256": "b22930f631e0d60775679a355d945c7e6323a9a092ca6d0c3162585133488704"
+      "sha256": "93c6e9b1f22c475fcf545843142547bec5c24f55d5293dc981d8c134be67d3ed"
     },
     {
       "id": "frame-unsupported-erasure-alg-zero",
       "category": "negative-frame",
       "manifest": "1.0/negative/frame-unsupported-erasure-alg-zero/manifest.json",
-      "sha256": "2c03a4dae0891ce7282afee3183b079abef9ec486c6cdabcc9866362d802135e"
+      "sha256": "32ea4f9233cafbe3c7799a62f288ae336fe7cf7b28f20376e9b4e8cc0cc72934"
     },
     {
       "id": "frame-unsupported-version-future",
       "category": "negative-frame",
       "manifest": "1.0/negative/frame-unsupported-version-future/manifest.json",
-      "sha256": "8a2edfe4cb1e6d2cddf51b8cb0d4738c7bb015953f9cca7e57cde7b73c40e8be"
+      "sha256": "489e18127d1531c5c5085b4a97ce792436dec4e30d4c09e55bb3f12c22f2a36a"
     },
     {
       "id": "frame-unsupported-version-major",
       "category": "negative-frame",
       "manifest": "1.0/negative/frame-unsupported-version-major/manifest.json",
-      "sha256": "af6e9d8bf742c901e54827b8e9ac5a581f5235bcea2de4af85da0e89ec6ccfc5"
+      "sha256": "b0f7f4ad3dff80b0557b454a1b4a8534287ef5d7336cefc7d9c25831759aed71"
     },
     {
       "id": "frame-unsupported-version-minor",
       "category": "negative-frame",
       "manifest": "1.0/negative/frame-unsupported-version-minor/manifest.json",
-      "sha256": "459f3950a8ed3316e9e76847fd26840a3b83781b88deba34a3f241305ff517c9"
+      "sha256": "8ce77424bfb8335ecd947932ddc858e7955efcbd65b208efda478aad70ab4490"
     },
     {
       "id": "frame-zero-source-count",
       "category": "negative-frame",
       "manifest": "1.0/negative/frame-zero-source-count/manifest.json",
-      "sha256": "f5b8c1620936e990350eca6717cb8a173604469de162a7f555baafa09a491015"
+      "sha256": "2d33994c22349f912458eaa920d6269cc73adc1904c31676ac1bd3dd6b4508a8"
     },
     {
       "id": "frame-zero-symbol-len",
       "category": "negative-frame",
       "manifest": "1.0/negative/frame-zero-symbol-len/manifest.json",
-      "sha256": "fbec06b53c55807851a77f461b59c44dcb3fe60bd7af313529e58110149d6bd9"
+      "sha256": "5146b457695d28df333456473450de9fff7dbcbfd88cd905d1d918f1aa37f6ff"
     },
     {
       "id": "preamble-bad-magic",
       "category": "negative-preamble",
       "manifest": "1.0/negative/preamble-bad-magic/manifest.json",
-      "sha256": "600e85c244aef75a8b20d0a2a3927dbf6ac2672f8b5af73990a4bd6b6e16dbab"
+      "sha256": "9d55bc187758b85a8b343c3671d50fc4949f671a3671d9d69cc99549b649634a"
     },
     {
       "id": "preamble-body-out-of-bounds",
       "category": "negative-preamble",
       "manifest": "1.0/negative/preamble-body-out-of-bounds/manifest.json",
-      "sha256": "201533d55fe61a5c3d8eb63cd553229b231018555eba880ef2f86f955051de45"
+      "sha256": "24f121402dadf8458f4ea31080b9fa16509d3b53582237e06a326bbfffae3c73"
     },
     {
       "id": "preamble-plaintext-with-kdf",
       "category": "negative-preamble",
       "manifest": "1.0/negative/preamble-plaintext-with-kdf/manifest.json",
-      "sha256": "618da53ea3ec0dc7c31f66162719da239c8f8c071bb6418d80fe571ae8eac321"
+      "sha256": "0be23ca32a6437e2dd3949a59de0c091483892ab03ca241f1e21da8c1f7ba7af"
     },
     {
       "id": "preamble-unsupported-compression",
       "category": "negative-preamble",
       "manifest": "1.0/negative/preamble-unsupported-compression/manifest.json",
-      "sha256": "dafcb5c57683fd094360452df1cbbf9d02a0b6bd501724431749ab147bd7c05c"
+      "sha256": "6f1f1e7905a350b41fb7d8752f1a91ae8dfaf04ccdce350bcd16efc98d2a724b"
     },
     {
       "id": "preamble-zero-kdf-memory",
       "category": "negative-preamble",
       "manifest": "1.0/negative/preamble-zero-kdf-memory/manifest.json",
-      "sha256": "7aaf79506bae8214710243d2129763324d4da3d58b652114de437bdc69914d87"
+      "sha256": "e67cdae3c979e31242a22fb373821da1275895d823468cea7b529bfb46e1eb2c"
     },
     {
       "id": "recovery-insufficient-frames",
       "category": "negative-recovery",
       "manifest": "1.0/negative/recovery-insufficient-frames/manifest.json",
-      "sha256": "94f7c9c9c4b7ec0a4398a1a9e0be50f92e5580fd8f5e6dc560d71b25fda3480d"
+      "sha256": "829a4974a5d9b5b9615c1cd07ecaada8226cf81203f787a701c5b1d2c9b5e50f"
     },
     {
       "id": "session-duplicate-conflict",
       "category": "negative-session",
       "manifest": "1.0/negative/session-duplicate-conflict/manifest.json",
-      "sha256": "f75a24b89311ab495054430b9a035d492d264296bc0995e36f777deb7d0e6008"
+      "sha256": "a1255410b25c116d5b41f2efb39ccf2279f64a6fd47b0bdf17e145c80b8a9527"
     },
     {
       "id": "session-identity-conflict",
       "category": "negative-session",
       "manifest": "1.0/negative/session-identity-conflict/manifest.json",
-      "sha256": "6b2232016298fb4d6a935993c09a00459e524d1c71b452d7841fa5bfb422a67c"
+      "sha256": "ec87b88e5a0db1c90fc4a275af29660999671e6053a2d60932432c907f46821f"
     },
     {
       "id": "compressible-text-note",
       "category": "positive",
       "manifest": "1.0/positive/compressible-text-note/manifest.json",
-      "sha256": "fd19987b2dc08d7b3447c5ac11bb7ddad3cbbd0b8e77359b0d4512bd95d4fbe1"
+      "sha256": "2f35cae44e6ef36a68dc6ee54fb6f94a8ff332d86333e0ec949561a64940933d"
     },
     {
       "id": "encrypted-file-tree",
       "category": "positive",
       "manifest": "1.0/positive/encrypted-file-tree/manifest.json",
-      "sha256": "8c345bb8636b94631330b2f9570859ed8e28b97f3520aef6b8d800882044c667"
+      "sha256": "4b07cbee81e6f5a24fd09290f6fb27dc461551687f70d9529bbb92a4bca7019a"
     },
     {
       "id": "frame-minimal",
       "category": "positive",
       "manifest": "1.0/positive/frame-minimal/manifest.json",
-      "sha256": "ae6286691c04260ce59e6729dcd78216fabdc54044e700e3aec19e711c316f08"
+      "sha256": "a9c71c3572e598b136edb18c0f70bd3f99e327e3d193aea938a3f798b3a3491b"
     },
     {
       "id": "incompressible-file",
       "category": "positive",
       "manifest": "1.0/positive/incompressible-file/manifest.json",
-      "sha256": "80f1fe4e299bb0ddb28448dc45cf592f66488a8df19811adc9cc5daeeef4bd54"
+      "sha256": "d79a88102ba05faf8ae90261e9f4d4d3a198122e902d0a5926622ce14bfd7baf"
     },
     {
       "id": "ldpc-round-trip",
       "category": "positive",
       "manifest": "1.0/positive/ldpc-round-trip/manifest.json",
-      "sha256": "061b24a2ce8a7995dd13900460f64648e2c44d424ad37f94b6ff933908d8b0f0"
+      "sha256": "db39377d525e188225c0ae23309efc5e051b9ccbec656f4c797ba66df093912c"
     },
     {
       "id": "missing-source-symbol",
       "category": "positive",
       "manifest": "1.0/positive/missing-source-symbol/manifest.json",
-      "sha256": "dd0ebe8846e4082ce7e94bb717316815b5d451abcdaae401e9b08bc6a841c0ab"
+      "sha256": "11da18b8ea52889dc3f0e563ecc4b48f8e033c3f91b5aad2957e30f1ab344611"
     },
     {
       "id": "plaintext-text-note",
       "category": "positive",
       "manifest": "1.0/positive/plaintext-text-note/manifest.json",
-      "sha256": "6594a1217b4be172994db2399de1653adc77333231524f620fc073531668eb51"
+      "sha256": "d5b5075e376296b570956c317fd8d0e7786b37e4f3f3611a7824e5db6fe4d92c"
     }
   ]
 }
