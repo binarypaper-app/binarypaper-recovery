@@ -1,0 +1,20 @@
+# Build output
+bin/
+obj/
+artifacts/
+*.user
+
+# Local tooling
+.vs/
+.idea/
+.vscode/
+
+# Agent loaders. These are intentionally UNTRACKED here.
+#
+# They carry the private-context bridge (sibling private repo paths, ADR numbers,
+# the boundary audit list) that this repository's own audit rules forbid in the
+# published tree. Their tracked sources live in the private core spec, under
+# tools/agent-sessions/recovery-repo-loaders/, and are copied in by the session
+# controller - the same pattern the C:\BinaryPaper root loaders use.
+AGENTS.md
+CLAUDE.md

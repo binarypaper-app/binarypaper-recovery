@@ -1,0 +1,11 @@
+# Conformance fixtures are byte artifacts. Git must never translate their bytes.
+*.bpq binary
+*.bin binary
+*.png binary
+*.jpg binary
+*.zip binary
+vectors/**/restored-*.txt binary
+vectors/**/*.json -text
+
+# Everything else is normal text with LF in the repository.
+* text=auto eol=lf
