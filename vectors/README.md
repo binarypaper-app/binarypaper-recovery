@@ -12,6 +12,7 @@ vectors/
   schema/vector-manifest.schema.json  the manifest contract
   1.0/positive/<id>/                  inputs that must recover exactly
   1.0/negative/<id>/                  inputs that must be rejected, at a named stage
+  1.0/images/<id>/                    page images that must decode to exact frame bytes
 ```
 
 ## Authority
@@ -83,13 +84,41 @@ Text artifacts are byte artifacts, not platform-native text files. `.gitattribut
 them binary so their LF bytes survive checkout on every platform, and every manifest hash
 covers the exact committed bytes.
 
+## Image vectors
+
+`operation: "decode-image"` vectors stop after QR decoding and check the **frame bytes
+that came out of the pixels**. They are derived from the capsule vectors, so the codes
+carry exactly the frame bytes already pinned elsewhere in this suite: an image vector that
+passes proves the whole path from pixels to restored content, and a difference can only
+have come from the image layer.
+
+Frames are compared **by hash, not by count**. A decoder that finds the right number of
+symbols but recodes their payloads through text passes a count check and fails here — and
+`image-binary-payload-png` exists precisely to catch it. Its codes carry ciphertext, so
+their payloads contain `0x00` and are not valid UTF-8 in any encoding. A reader with the
+text-recoding bug fails that one vector while every text-friendly vector still passes,
+which is what makes the failure diagnosable instead of mysterious.
+
+The images are rendered deterministically from the frame bytes at fixed module size, quiet
+zone, rotation and JPEG quality, so regenerating reproduces them byte-for-byte.
+
+## Regenerating
+
+Two generators, run in this order:
+
+1. the capsule suite (positive and negative vectors), which rewrites `MANIFEST.json`;
+2. the image suite, which **merges** its entries back into `MANIFEST.json`.
+
+Running them the other way round drops the image entries from the aggregate manifest.
+
 ## Coverage
 
-The current suite covers frame structure and field rules, the CRC-32C check, session
-identity and duplicate handling, insufficient-frame recovery, preamble structure and
-algorithm-combination rules, body bounds, KDF parameter validation, both authentication
-modes, and full recovery for stored, LZMA, plaintext, encrypted, Reed–Solomon and LDPC
-capsules.
+Frame structure and field rules, the CRC-32C check, session identity and duplicate
+handling, insufficient-frame recovery, preamble structure and algorithm-combination rules,
+body bounds, KDF parameter validation, both authentication modes, full recovery for
+stored, LZMA, plaintext, encrypted, Reed–Solomon and LDPC capsules, and PNG/JPEG image
+decoding including a rotated page, a multi-code page, and a binary payload.
 
-Still to come before the first release: image (PNG/JPEG) vectors, LZMA and ZIP package
-negatives, and profile/resource refusals.
+Still to come before the first release: LZMA and ZIP package negatives, profile and
+resource refusals, and image negatives (unreadable code alongside recoverable repair
+symbols, mixed capsules across images).

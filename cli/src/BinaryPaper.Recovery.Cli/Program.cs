@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using BinaryPaper.Recovery;
 using BinaryPaper.Recovery.Cli;
+using BinaryPaper.Recovery.Images;
 
 return CommandLine.Run(args);
 
@@ -73,12 +74,16 @@ namespace BinaryPaper.Recovery.Cli
         private static int Inspect(string[] args)
         {
             Options options = Options.Parse(args);
-            List<(string Source, byte[] Bytes)> frames = FrameInput.Collect(options.Inputs);
+            CollectedInput collected = FrameInput.Collect(options.Inputs, options.ImagePolicy);
+            List<(string Source, byte[] Bytes)> frames = collected.Frames;
+
+            ReportImages(collected.Images);
 
             if (frames.Count == 0)
             {
-                Console.Error.WriteLine("error: no .bpq frame files were found in the given inputs.");
-                return ExitCodes.NoFrames;
+                Console.Error.WriteLine(
+                    "error: no frames were found. Inputs may be .bpq frame files, or PNG/JPEG page images.");
+                return collected.Images.Count > 0 ? ExitCodes.InputDecodeError : ExitCodes.NoFrames;
             }
 
             FrameIngestResult ingest = CapsuleRecovery.Ingest(frames);
@@ -177,11 +182,16 @@ namespace BinaryPaper.Recovery.Cli
                 throw new UsageException("recover requires --output <directory>.");
             }
 
-            List<(string Source, byte[] Bytes)> frames = FrameInput.Collect(options.Inputs);
+            CollectedInput collected = FrameInput.Collect(options.Inputs, options.ImagePolicy);
+            List<(string Source, byte[] Bytes)> frames = collected.Frames;
+
+            ReportImages(collected.Images);
+
             if (frames.Count == 0)
             {
-                Console.Error.WriteLine("error: no .bpq frame files were found in the given inputs.");
-                return ExitCodes.NoFrames;
+                Console.Error.WriteLine(
+                    "error: no frames were found. Inputs may be .bpq frame files, or PNG/JPEG page images.");
+                return collected.Images.Count > 0 ? ExitCodes.InputDecodeError : ExitCodes.NoFrames;
             }
 
             FrameIngestResult ingest = CapsuleRecovery.Ingest(frames);
@@ -239,6 +249,27 @@ namespace BinaryPaper.Recovery.Cli
             return ExitCodes.Success;
         }
 
+        /// <summary>
+        /// Reports what each page image yielded. A page that decoded nothing is worth saying out
+        /// loud - it usually means a scan is too low-resolution or too skewed - but it never stops
+        /// the frames recovered from other pages being used.
+        /// </summary>
+        private static void ReportImages(IReadOnlyList<PageImageResult> images)
+        {
+            foreach (PageImageResult image in images)
+            {
+                if (image.Failure is not null)
+                {
+                    Console.Error.WriteLine($"  image {image.Source}: {image.Failure}");
+                }
+                else
+                {
+                    Console.Error.WriteLine(
+                        $"  image {image.Source}: {image.Symbols.Count} QR code(s) in {image.Width}x{image.Height}");
+                }
+            }
+        }
+
         private static int UnknownCommand(string command)
         {
             Console.Error.WriteLine($"error: unknown command '{command}'.");
@@ -260,8 +291,9 @@ namespace BinaryPaper.Recovery.Cli
               binarypaper --version
 
             INPUTS
-              A .bpq frame file, or a directory containing them (searched recursively,
-              in a deterministic order).
+              PNG or JPEG page images, raw .bpq frame files, or a directory containing
+              them (searched recursively, in a deterministic order). File type is
+              determined by content, not by extension.
 
             OPTIONS
               --output <dir>          where to write recovered content (recover only)
@@ -269,6 +301,7 @@ namespace BinaryPaper.Recovery.Cli
               --password-stdin        read the password from standard input
               --json                  machine-readable output on stdout
               --max-output-bytes <n>  cap the decompressed package size
+              --max-image-pixels <n>  cap the decoded pixel count per page image
               --allow-high-kdf-cost   accept Argon2id parameters above the stable profile
 
             PASSWORDS
@@ -277,8 +310,9 @@ namespace BinaryPaper.Recovery.Cli
               visible to other processes and are recorded in shell history.
 
             SCOPE
-              Recovery only. This tool does not create backups, does not read PDFs, does not
-              use a camera, and never accesses the network.
+              Recovery only. This tool reads page images and raw frames. It does not create
+              backups, does not read PDFs, does not use a camera, and never accesses the
+              network.
 
             EXIT CODES
               0   success                     22  not enough codes / decode incomplete
@@ -308,6 +342,8 @@ namespace BinaryPaper.Recovery.Cli
 
         public ResourcePolicy Policy { get; init; } = ResourcePolicy.Default;
 
+        public ImagePolicy ImagePolicy { get; init; } = ImagePolicy.Default;
+
         public static Options Parse(string[] args)
         {
             var inputs = new List<string>();
@@ -317,6 +353,7 @@ namespace BinaryPaper.Recovery.Cli
             bool passwordStdin = false;
             bool allowHighKdf = false;
             long maxOutput = ResourcePolicy.Default.MaxDecompressedBytes;
+            long maxPixels = ImagePolicy.Default.MaxPixels;
 
             for (int i = 1; i < args.Length; i++)
             {
@@ -337,6 +374,13 @@ namespace BinaryPaper.Recovery.Cli
                         break;
                     case "--output":
                         output = NextValue(args, ref i, "--output");
+                        break;
+                    case "--max-image-pixels":
+                        if (!long.TryParse(NextValue(args, ref i, "--max-image-pixels"), out maxPixels) || maxPixels <= 0)
+                        {
+                            throw new UsageException("--max-image-pixels requires a positive integer.");
+                        }
+
                         break;
                     case "--max-output-bytes":
                         if (!long.TryParse(NextValue(args, ref i, "--max-output-bytes"), out maxOutput) || maxOutput <= 0)
@@ -372,7 +416,8 @@ namespace BinaryPaper.Recovery.Cli
                 {
                     MaxDecompressedBytes = maxOutput,
                     AllowHighKdfCost = allowHighKdf
-                }
+                },
+                ImagePolicy = new ImagePolicy { MaxPixels = maxPixels }
             };
         }
 
@@ -438,10 +483,24 @@ namespace BinaryPaper.Recovery.Cli
         }
     }
 
-    /// <summary>Collects frame files from the given paths in a deterministic order.</summary>
+    /// <summary>The frames found in the inputs, plus what happened to each page image.</summary>
+    internal sealed record CollectedInput(
+        List<(string Source, byte[] Bytes)> Frames,
+        List<PageImageResult> Images);
+
+    /// <summary>
+    /// Collects frames from the given paths, in a deterministic order.
+    /// </summary>
+    /// <remarks>
+    /// Two kinds of input produce frames: a raw <c>.bpq</c> file, and a page image containing QR
+    /// codes. Both are read here so the rest of the pipeline never has to care which one a frame
+    /// came from.
+    /// </remarks>
     internal static class FrameInput
     {
-        public static List<(string Source, byte[] Bytes)> Collect(IReadOnlyList<string> inputs)
+        private static readonly string[] ImageExtensions = [".png", ".jpg", ".jpeg"];
+
+        public static CollectedInput Collect(IReadOnlyList<string> inputs, ImagePolicy policy)
         {
             var files = new List<string>();
 
@@ -449,7 +508,8 @@ namespace BinaryPaper.Recovery.Cli
             {
                 if (Directory.Exists(input))
                 {
-                    files.AddRange(Directory.GetFiles(input, "*.bpq", SearchOption.AllDirectories));
+                    files.AddRange(Directory.GetFiles(input, "*", SearchOption.AllDirectories)
+                        .Where(IsCandidate));
                 }
                 else if (File.Exists(input))
                 {
@@ -464,20 +524,45 @@ namespace BinaryPaper.Recovery.Cli
             // Ordinal sort so repeated runs and repeated inputs behave identically everywhere.
             files.Sort(StringComparer.Ordinal);
 
-            var result = new List<(string, byte[])>(files.Count);
-            var seen = new HashSet<string>(StringComparer.Ordinal);
+            var frames = new List<(string, byte[])>();
+            var images = new List<PageImageResult>();
+            var seenPaths = new HashSet<string>(StringComparer.Ordinal);
+            var reader = new PageImageReader(policy);
+
             foreach (string file in files)
             {
                 string full = Path.GetFullPath(file);
-                if (!seen.Add(full))
+                if (!seenPaths.Add(full))
                 {
                     continue;
                 }
 
-                result.Add((Path.GetFileName(file), File.ReadAllBytes(file)));
+                byte[] bytes = File.ReadAllBytes(file);
+                string name = Path.GetFileName(file);
+
+                // Content decides, not the extension. A .bpq holding a PNG is a PNG.
+                if (PageImageReader.LooksLikeImage(bytes))
+                {
+                    PageImageResult result = reader.Read(name, bytes);
+                    images.Add(result);
+                    foreach (DecodedSymbol symbol in result.Symbols)
+                    {
+                        frames.Add(($"{name}#qr", symbol.Payload));
+                    }
+
+                    continue;
+                }
+
+                frames.Add((name, bytes));
             }
 
-            return result;
+            return new CollectedInput(frames, images);
+        }
+
+        private static bool IsCandidate(string path)
+        {
+            string extension = Path.GetExtension(path).ToLowerInvariant();
+            return extension == ".bpq" || ImageExtensions.Contains(extension);
         }
     }
 }

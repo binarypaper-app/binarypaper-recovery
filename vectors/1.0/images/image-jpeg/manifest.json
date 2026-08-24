@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "image-jpeg",
+  "category": "image",
+  "title": "The same page as JPEG. Lossy compression must not defeat the error correction.",
+  "operation": "decode-image",
+  "inputs": [
+    {
+      "path": "page-0.jpg",
+      "length": 132127,
+      "sha256": "f3039cd2b7125bbcb1ea31889705b3a495699a419977e0c060213ba9534a6584",
+      "role": "page-image"
+    }
+  ],
+  "expected": {
+    "result": "success",
+    "frameCount": 3,
+    "frames": [
+      {
+        "length": 151,
+        "sha256": "fb3fdaa7afc18332c41672b39b793333e67d1a4c38813cb91bcad1d5f193936d"
+      },
+      {
+        "length": 151,
+        "sha256": "862db194222c36e387897c51972da95f94ac74f9e009bb9328c64f075459c0d5"
+      },
+      {
+        "length": 151,
+        "sha256": "32196c3e61e73eb1f929d4f202e5142513689c9a7c84e8abc2acfd656a722b88"
+      }
+    ]
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Recovery.ImageVectors",
+    "recipe": "QR matrices rendered from the frames of \u0027plaintext-text-note\u0027 at 6px per module, 4-module quiet zone, 0 degree rotation, format Jpeg, JPEG quality 85",
+    "derivedFrom": "plaintext-text-note"
+  }
+}

@@ -14,6 +14,12 @@
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.6.2" />
     <!-- LZMA decode for the legacy .lzma alone container. Decode only; this tool never writes. -->
     <PackageReference Include="SharpCompress" Version="0.49.1" />
+    <!-- PNG/JPEG decode to raw pixels. Pure managed port of stb_image.h, no dependencies and no
+         native binaries, so one build runs on every RID including ARM64. -->
+    <PackageReference Include="StbImageSharp" Version="2.30.16" />
+    <!-- Multi-QR detection. Core package only: the luminance source is supplied locally so no
+         image-binding package is pulled in. -->
+    <PackageReference Include="ZXing.Net" Version="0.16.11" />
   </ItemGroup>
 
 </Project>

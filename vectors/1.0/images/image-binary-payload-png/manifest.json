@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "image-binary-payload-png",
+  "category": "image",
+  "title": "Ciphertext frames containing 0x00 and invalid UTF-8. Pins the binary path: a reader that round-trips a payload through text fails here and nowhere else.",
+  "operation": "decode-image",
+  "inputs": [
+    {
+      "path": "page-0.png",
+      "length": 19037,
+      "sha256": "e56df7da4d61416308bc9ef96b1ec7601b45e93cf0b30afcb3ace621c61648c0",
+      "role": "page-image"
+    }
+  ],
+  "expected": {
+    "result": "success",
+    "frameCount": 3,
+    "frames": [
+      {
+        "length": 279,
+        "sha256": "fa63da7421b74adb679716fcad67160d4f0659898051008ff64ab3d6118f6174"
+      },
+      {
+        "length": 279,
+        "sha256": "1235ca1a1cd4a446a0231e712320a44412a509fec4af9f43215f2e8ba785eb55"
+      },
+      {
+        "length": 279,
+        "sha256": "bf15c007d8dc5260b0c004837e40ba36049a9316b9189537a0279dec623f5651"
+      }
+    ]
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Recovery.ImageVectors",
+    "recipe": "QR matrices rendered from the frames of \u0027encrypted-file-tree\u0027 at 6px per module, 4-module quiet zone, 0 degree rotation, format Png",
+    "derivedFrom": "encrypted-file-tree"
+  }
+}

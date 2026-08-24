@@ -4,6 +4,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using BinaryPaper.Recovery;
+using BinaryPaper.Recovery.Images;
 
 namespace BinaryPaper.Recovery.Cli;
 
@@ -132,6 +133,12 @@ internal static class VerifyVectors
             return;
         }
 
+        if (operation == "decode-image")
+        {
+            VerifyImage(directory, root, expected);
+            return;
+        }
+
         try
         {
             FrameIngestResult ingest = CapsuleRecovery.Ingest(frames);
@@ -174,6 +181,52 @@ internal static class VerifyVectors
         catch (RecoveryException ex)
         {
             AssertFailure(expectedResult, expected, ex.CategoryName, ex.StageName, ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Verifies an image vector: the page decodes to exactly the frames the manifest names.
+    /// </summary>
+    /// <remarks>
+    /// Frames are compared by hash rather than by count. A decoder that finds the right number of
+    /// symbols but recodes their payloads through text would pass a count check and fail here,
+    /// which is the whole point of having an image vector whose payload is ciphertext.
+    /// </remarks>
+    private static void VerifyImage(string directory, JsonElement root, JsonElement expected)
+    {
+        var reader = new PageImageReader();
+        var decodedHashes = new List<string>();
+
+        foreach (JsonElement input in root.GetProperty("inputs").EnumerateArray())
+        {
+            string path = input.GetProperty("path").GetString()!;
+            byte[] bytes = File.ReadAllBytes(Path.Combine(directory, path));
+            PageImageResult result = reader.Read(path, bytes);
+
+            if (result.Failure is not null && result.Symbols.Count == 0)
+            {
+                throw new InvalidOperationException($"image '{path}': {result.Failure}");
+            }
+
+            decodedHashes.AddRange(result.Symbols.Select(sym => Sha256Hex(sym.Payload)));
+        }
+
+        int expectedCount = expected.GetProperty("frameCount").GetInt32();
+        if (decodedHashes.Count != expectedCount)
+        {
+            throw new InvalidOperationException(
+                $"decoded {decodedHashes.Count} QR code(s), expected {expectedCount}");
+        }
+
+        foreach (JsonElement frame in expected.GetProperty("frames").EnumerateArray())
+        {
+            string hash = frame.GetProperty("sha256").GetString()!;
+            if (!decodedHashes.Remove(hash))
+            {
+                throw new InvalidOperationException(
+                    $"no decoded QR payload matched the expected frame {hash[..12]}...; "
+                    + "a payload was probably recoded through text");
+            }
         }
     }
 

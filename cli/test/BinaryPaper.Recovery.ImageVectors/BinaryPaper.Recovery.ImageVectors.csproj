@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>BinaryPaper.Recovery.ImageVectors</RootNamespace>
+    <AssemblyName>image-vectors</AssemblyName>
+    <Description>Generates the image conformance vectors. Test tooling; not shipped.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BinaryPaper.Recovery\BinaryPaper.Recovery.csproj" />
+  </ItemGroup>
+
+</Project>

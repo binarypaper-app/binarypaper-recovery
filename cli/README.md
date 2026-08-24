@@ -39,12 +39,18 @@ trust this binary.
 
 ### Inputs
 
-A `.bpq` frame file, or a directory containing them (searched recursively). Repeated
-inputs and directory ordering are deterministic: the same inputs always produce the same
-result on every platform.
+PNG or JPEG page images, raw `.bpq` frame files, or a directory containing them (searched
+recursively). Repeated inputs and directory ordering are deterministic: the same inputs
+always produce the same result on every platform.
 
-PNG and JPEG page images are the next milestone. **PDF is deliberately out of scope** —
-see the [repository README](../README.md#scope).
+**File type is decided by content, not by extension.** A `.bpq` that actually holds a PNG
+is read as a PNG.
+
+A page image that decodes nothing is reported but never stops the run: losing the frames
+from twenty good pages because the twenty-first is unreadable would be the wrong behaviour
+for a recovery tool.
+
+**PDF is deliberately out of scope** — see the [repository README](../README.md#scope).
 
 ### Passwords
 
@@ -82,10 +88,12 @@ not have to parse prose.
 
 ```text
 cli/
-  src/BinaryPaper.Recovery/         the recovery library: one file per pipeline stage
-  src/BinaryPaper.Recovery.Codecs/  vendored upstream erasure codecs, kept verbatim
-  src/BinaryPaper.Recovery.Cli/     argument parsing and output formatting only
-  test/BinaryPaper.Recovery.Tests/  bounds and arithmetic tests
+  src/BinaryPaper.Recovery/            the recovery library: one file per pipeline stage
+  src/BinaryPaper.Recovery/Images/     PNG/JPEG decode and multi-QR detection
+  src/BinaryPaper.Recovery.Codecs/     vendored upstream erasure codecs, kept verbatim
+  src/BinaryPaper.Recovery.Cli/        argument parsing and output formatting only
+  test/BinaryPaper.Recovery.Tests/     bounds and arithmetic tests
+  test/BinaryPaper.Recovery.ImageVectors/  generates the image fixtures; not shipped
 ```
 
 The library is platform-neutral; the console project is a thin shell around it. Anything
@@ -120,6 +128,16 @@ never valid — three very different next actions.
 
 **Wrong password and tampering share one error.** They are cryptographically
 indistinguishable and the tool does not pretend otherwise.
+
+**QR payloads are read as bytes, never as text.** A frame payload is arbitrary binary.
+`ZXing.Result.Text` applies a character-set interpretation and mangles it, so the payload
+is taken from the decoder's raw byte segments and `Text` is not consulted even as a
+fallback. A frame corrupted that way would fail its CRC-32C with nothing to suggest the
+decoder, rather than the paper, was at fault.
+
+**Image dependencies are pure managed.** `StbImageSharp` and `ZXing.Net` core have no
+transitive dependencies and no native binaries between them, so one build runs anywhere
+.NET runs, including ARM64, with no per-platform assets to obtain.
 
 **Output is atomic.** Content is staged in a sibling `.partial-*` directory and moved into
 place only once every byte is written, so a failed recovery never leaves something that

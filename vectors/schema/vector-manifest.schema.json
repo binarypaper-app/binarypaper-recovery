@@ -42,7 +42,8 @@
         "negative-authentication",
         "negative-compression",
         "negative-package",
-        "negative-output"
+        "negative-output",
+        "image"
       ]
     },
     "title": {
@@ -51,9 +52,9 @@
       "maxLength": 200
     },
     "operation": {
-      "description": "What an implementation should do with the inputs. 'recover' runs the full pipeline to restored bytes; 'inspect' stops before authentication and reports public metadata only.",
+      "description": "What an implementation should do with the inputs. 'recover' runs the full pipeline to restored bytes; 'inspect' stops before authentication and reports public metadata only; 'decode-image' stops after QR decoding and checks the frame bytes that came out of the pixels.",
       "type": "string",
-      "enum": ["recover", "inspect"]
+      "enum": ["recover", "inspect", "decode-image"]
     },
     "inputs": {
       "description": "Every input file, in the order they should be presented. Ordering matters for session and duplicate cases.",
@@ -107,6 +108,25 @@
         "displayName": {
           "description": "The manifest display name, for a successful recovery.",
           "type": "string"
+        },
+        "frameCount": {
+          "description": "For a decode-image vector, how many QR symbols the page images must yield in total.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "frames": {
+          "description": "For a decode-image vector, the exact frame bytes the images must decode to. Compared by hash rather than by count, so a decoder that finds the right number of symbols but recodes a payload through text fails here.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["length", "sha256"],
+            "properties": {
+              "length": { "type": "integer", "minimum": 1 },
+              "sha256": { "$ref": "#/$defs/sha256" }
+            }
+          }
         },
         "capsule": {
           "description": "Public frame/session metadata a reader must report identically.",
