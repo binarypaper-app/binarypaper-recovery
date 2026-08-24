@@ -7,6 +7,7 @@ artifacts/
 # Local tooling
 .vs/
 .idea/
+*.iml
 .vscode/
 
 # Contributor-tooling notes, intentionally untracked.
