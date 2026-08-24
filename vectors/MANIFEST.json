@@ -65,7 +65,7 @@
       "id": "frame-truncated-digest",
       "category": "negative-frame",
       "manifest": "1.0/negative/frame-truncated-digest/manifest.json",
-      "sha256": "4dd9da6d7f2cfd4e72e274beb57094776a3960206e451e6e8b97bde608e5c6d2"
+      "sha256": "0710d685ab6371d20577e8e79142e8cf8fe1eddbec88bb84856d1ac917f66c13"
     },
     {
       "id": "frame-truncated-header",
@@ -77,7 +77,7 @@
       "id": "frame-truncated-payload",
       "category": "negative-frame",
       "manifest": "1.0/negative/frame-truncated-payload/manifest.json",
-      "sha256": "a1b27baa8064b8e0b3ac94c52bed30d1a26cf34597c18f629cdda51f4f4537c6"
+      "sha256": "8b3fcfb412c6c26fda3e1a7aee7385357da124ad04fd6f583f57aafa23c9b0c5"
     },
     {
       "id": "frame-unsupported-erasure-alg-future",

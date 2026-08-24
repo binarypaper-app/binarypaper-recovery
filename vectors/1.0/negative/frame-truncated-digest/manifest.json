@@ -6,7 +6,7 @@
   },
   "id": "frame-truncated-digest",
   "category": "negative-frame",
-  "title": "Cut inside the trailing CRC-32C.",
+  "title": "Cut inside the trailing CRC-32C: length no longer equals 23 \u002B symbol_len.",
   "operation": "recover",
   "inputs": [
     {
@@ -18,14 +18,14 @@
     }
   ],
   "expected": {
-    "result": "frame.malformed",
+    "result": "frame.invalid-field",
     "stage": "frame"
   },
   "provenance": {
     "generator": "BinaryPaper.Capsule.Tool write-public-suite",
     "recipe": "frame-minimal, mutation \u0027frame-truncated-digest\u0027",
     "derivedFrom": "frame-minimal",
-    "mutation": "Cut inside the trailing CRC-32C.",
+    "mutation": "Cut inside the trailing CRC-32C: length no longer equals 23 \u002B symbol_len.",
     "crcRecomputed": false
   }
 }
