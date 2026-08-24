@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "package-missing-manifest",
+  "category": "negative-package",
+  "title": "No binarypaper-manifest.bin entry.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 279,
+      "sha256": "0a2fc42a1e5aa68b5b514eb891a0e7cb42767d9511eacf3f8fb2355fd0d3b482",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "payload-package.bin",
+      "length": 127,
+      "sha256": "2a5443329f8668449aa3b3bcecc55c920102afecd72f4fa13b1a5d601853b577",
+      "role": "payload-package",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "package.manifest-invalid",
+    "stage": "package"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "hostile payload package wrapped in a real plaintext capsule: SHA-256 digest and frame CRC-32C values are all correct, so the capsule is valid up to the stage under test",
+    "mutation": "No binarypaper-manifest.bin entry.",
+    "crcRecomputed": true
+  }
+}

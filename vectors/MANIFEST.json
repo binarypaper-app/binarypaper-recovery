@@ -5,7 +5,7 @@
     "formatMinor": 0
   },
   "schema": "schema/vector-manifest.schema.json",
-  "vectorCount": 39,
+  "vectorCount": 52,
   "vectors": [
     {
       "id": "image-binary-payload-png",
@@ -54,6 +54,12 @@
       "category": "negative-authentication",
       "manifest": "1.0/negative/auth-wrong-password/manifest.json",
       "sha256": "903866748168f84302d65d0da5a63418521716d81f4e8485ddb7a78657fd4ec0"
+    },
+    {
+      "id": "compression-malformed-lzma",
+      "category": "negative-compression",
+      "manifest": "1.0/negative/compression-malformed-lzma/manifest.json",
+      "sha256": "aa27d8ea199ba2da0ffeec01c0325712f433d1eebd1aff96a37b5e74bab11387"
     },
     {
       "id": "frame-bad-magic",
@@ -152,6 +158,66 @@
       "sha256": "5146b457695d28df333456473450de9fff7dbcbfd88cd905d1d918f1aa37f6ff"
     },
     {
+      "id": "package-absolute-path",
+      "category": "negative-package",
+      "manifest": "1.0/negative/package-absolute-path/manifest.json",
+      "sha256": "31c394ba0eb5dcfc740aeccbad3cfed32517c2b826f65d89224aedcf904242d2"
+    },
+    {
+      "id": "package-backslash-path",
+      "category": "negative-package",
+      "manifest": "1.0/negative/package-backslash-path/manifest.json",
+      "sha256": "5f6ef1b501f9b5c6b9f940ca9016384664979d9cb772528838ec4a89092cf5f2"
+    },
+    {
+      "id": "package-deflated-entry",
+      "category": "negative-package",
+      "manifest": "1.0/negative/package-deflated-entry/manifest.json",
+      "sha256": "8b51ad09cd7fdb22e62d9b375e4cef3a88621655ba32f8d08375f117117c79ae"
+    },
+    {
+      "id": "package-duplicate-manifest",
+      "category": "negative-package",
+      "manifest": "1.0/negative/package-duplicate-manifest/manifest.json",
+      "sha256": "c77cfbca6a1b9aef35d5e4a21079f7560fc24df4ba6c0d717da769262d3d1130"
+    },
+    {
+      "id": "package-invalid-utf8-note",
+      "category": "negative-package",
+      "manifest": "1.0/negative/package-invalid-utf8-note/manifest.json",
+      "sha256": "5cc969b5e0fd2c9af8e51dd465c59ccc22d7a4fcb0a6b2bcf4e1bb0d75de176c"
+    },
+    {
+      "id": "package-missing-manifest",
+      "category": "negative-package",
+      "manifest": "1.0/negative/package-missing-manifest/manifest.json",
+      "sha256": "92cc7a7f3b8fe4a5d5ebc54df9e7382eb89a7434b13b49c9cae84727acb20934"
+    },
+    {
+      "id": "package-not-a-zip",
+      "category": "negative-package",
+      "manifest": "1.0/negative/package-not-a-zip/manifest.json",
+      "sha256": "21fededf312ab6fbc8d375af3de055c0d6499e5c7b5ea40b2680e1f9474b1764"
+    },
+    {
+      "id": "package-text-note-many-entries",
+      "category": "negative-package",
+      "manifest": "1.0/negative/package-text-note-many-entries/manifest.json",
+      "sha256": "ea130347f7a4f7c36d165a6e976d4c66d9813a9c9d2f020694dc3f067d548942"
+    },
+    {
+      "id": "package-traversal-path",
+      "category": "negative-package",
+      "manifest": "1.0/negative/package-traversal-path/manifest.json",
+      "sha256": "2ad662124a24c463a6566411b7c44a8185bd1a8652810dd28968d5aadaad0b07"
+    },
+    {
+      "id": "package-unsupported-manifest-version",
+      "category": "negative-package",
+      "manifest": "1.0/negative/package-unsupported-manifest-version/manifest.json",
+      "sha256": "04e133fca33c8ba9f300273b6e340d62092f595d9a83c33d3cc7cb7540218815"
+    },
+    {
       "id": "preamble-bad-magic",
       "category": "negative-preamble",
       "manifest": "1.0/negative/preamble-bad-magic/manifest.json",
@@ -182,10 +248,22 @@
       "sha256": "e67cdae3c979e31242a22fb373821da1275895d823468cea7b529bfb46e1eb2c"
     },
     {
+      "id": "profile-out-of-range",
+      "category": "negative-profile",
+      "manifest": "1.0/negative/profile-out-of-range/manifest.json",
+      "sha256": "725bf9860f14cea961713d036773c112dc9609f868e16a1604be184e044a2bdc"
+    },
+    {
       "id": "recovery-insufficient-frames",
       "category": "negative-recovery",
       "manifest": "1.0/negative/recovery-insufficient-frames/manifest.json",
       "sha256": "829a4974a5d9b5b9615c1cd07ecaada8226cf81203f787a701c5b1d2c9b5e50f"
+    },
+    {
+      "id": "resource-declared-output-too-large",
+      "category": "negative-compression",
+      "manifest": "1.0/negative/resource-declared-output-too-large/manifest.json",
+      "sha256": "12c26b9c1c55149b4211672b66c8b3f6b07b4d8247e19cb2341a24e460a022cc"
     },
     {
       "id": "session-duplicate-conflict",

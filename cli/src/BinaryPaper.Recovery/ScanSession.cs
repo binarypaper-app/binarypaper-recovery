@@ -35,7 +35,21 @@ public enum FrameAdmission
 public sealed class ScanSession
 {
     private readonly Dictionary<ushort, byte[]> _payloads = [];
-    private readonly Dictionary<ushort, byte[]> _rawFrames = [];
+
+    /// <summary>
+    /// SHA-256 of each accepted frame's full bytes, for exact-duplicate detection.
+    /// </summary>
+    /// <remarks>
+    /// A digest rather than the frame itself. Retaining whole frames doubles the memory a session
+    /// holds - at the largest supported shape that is roughly 9 MB of duplicated payload for no
+    /// benefit, since the bytes are never needed again once the symbol has been extracted.
+    ///
+    /// SHA-256 rather than the frame's own CRC-32C: this comparison decides whether two frames
+    /// claiming the same symbol index are "the same scan again" or "a conflict", and an attacker who
+    /// can find a CRC-32 collision could make a differing frame look like a harmless duplicate.
+    /// </remarks>
+    private readonly Dictionary<ushort, byte[]> _frameDigests = [];
+
     private readonly HashSet<ushort> _conflicts = [];
 
     private CapsuleFrame? _reference;
@@ -86,9 +100,11 @@ public sealed class ScanSession
                 : FrameAdmission.ForeignCapsule;
         }
 
-        if (_rawFrames.TryGetValue(frame.SymbolIndex, out byte[]? existing))
+        byte[] digest = System.Security.Cryptography.SHA256.HashData(rawFrame);
+
+        if (_frameDigests.TryGetValue(frame.SymbolIndex, out byte[]? existing))
         {
-            if (existing.AsSpan().SequenceEqual(rawFrame))
+            if (System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(existing, digest))
             {
                 return FrameAdmission.ExactDuplicate;
             }
@@ -98,7 +114,7 @@ public sealed class ScanSession
         }
 
         _payloads[frame.SymbolIndex] = frame.SymbolPayload;
-        _rawFrames[frame.SymbolIndex] = rawFrame.ToArray();
+        _frameDigests[frame.SymbolIndex] = digest;
         return FrameAdmission.Accepted;
     }
 

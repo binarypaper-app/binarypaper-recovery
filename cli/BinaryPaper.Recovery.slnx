@@ -4,4 +4,5 @@
   <Project Path="src/BinaryPaper.Recovery.Cli/BinaryPaper.Recovery.Cli.csproj" />
   <Project Path="test/BinaryPaper.Recovery.Tests/BinaryPaper.Recovery.Tests.csproj" />
   <Project Path="test/BinaryPaper.Recovery.ImageVectors/BinaryPaper.Recovery.ImageVectors.csproj" />
+  <Project Path="test/BinaryPaper.Recovery.FuzzTests/BinaryPaper.Recovery.FuzzTests.csproj" />
 </Solution>

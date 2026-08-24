@@ -64,7 +64,22 @@ public static class PayloadPackage
             byte[]? manifestBytes = null;
             int manifestCount = 0;
 
-            foreach (ZipArchiveEntry entry in archive.Entries)
+            // ZipArchive reads its central directory lazily, on first access to Entries, so a
+            // malformed archive throws here rather than from the constructor. Materialising the
+            // list inside a guard is what turns that into a classified rejection instead of an
+            // unhandled InvalidDataException escaping the library. Found by fuzzing.
+            List<ZipArchiveEntry> archiveEntries;
+            try
+            {
+                archiveEntries = [.. archive.Entries];
+            }
+            catch (Exception ex)
+            {
+                throw Package(RecoveryErrorCategory.PackageMalformed,
+                    $"Payload package has a malformed ZIP directory: {ex.Message}");
+            }
+
+            foreach (ZipArchiveEntry entry in archiveEntries)
             {
                 // A trailing separator is how ZIP marks a directory. Skip those rather than treating
                 // them as empty files.
@@ -78,8 +93,14 @@ public static class PayloadPackage
 
                 if (!seen.Add(path))
                 {
-                    throw Package(RecoveryErrorCategory.PackageInvalidEntry,
-                        $"Payload package declares '{path}' more than once.");
+                    // A duplicated manifest gets the more specific category. Both rules apply, but
+                    // "there are two manifests" tells the reader something actionable, while
+                    // "duplicate entry path" makes them go looking for which entry.
+                    throw path == ManifestEntryName
+                        ? Package(RecoveryErrorCategory.PackageManifestInvalid,
+                            $"Payload package contains more than one {ManifestEntryName}.")
+                        : Package(RecoveryErrorCategory.PackageInvalidEntry,
+                            $"Payload package declares '{path}' more than once.");
                 }
 
                 byte[] bytes = ReadEntry(entry);
@@ -141,10 +162,16 @@ public static class PayloadPackage
     {
         try
         {
+            // Opening an entry reads its local file header, which is a second place a malformed
+            // archive can throw from the library rather than from our validation.
             using Stream stream = entry.Open();
             using var buffer = new MemoryStream();
             stream.CopyTo(buffer);
             return buffer.ToArray();
+        }
+        catch (RecoveryException)
+        {
+            throw;
         }
         catch (Exception ex)
         {

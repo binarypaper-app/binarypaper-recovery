@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>benchmarks</AssemblyName>
+    <RootNamespace>BinaryPaper.Recovery.Benchmarks</RootNamespace>
+    <Description>Boundary resource measurement for the recovery CLI. Not shipped.</Description>
+  </PropertyGroup>
+
+</Project>

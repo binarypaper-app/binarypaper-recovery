@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "resource-declared-output-too-large",
+  "category": "negative-compression",
+  "title": "A valid .lzma header declaring roughly 4.6 exabytes of output. Must be refused before the buffer is allocated - the classic decompression bomb.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 279,
+      "sha256": "1a2fcdf924c402fb93ef9df6a07a2e91139ccefca3b753a33d17f44598d512d9",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "payload-package.bin",
+      "length": 77,
+      "sha256": "19df148f1d8a4d6afca3f4b732a8e94d01cc0cf1b564611f670396e4623e7cc2",
+      "role": "payload-package",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "resource.policy-refused",
+    "stage": "compression"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "well-formed .lzma alone header with an absurd declared size, wrapped in a real plaintext capsule",
+    "crcRecomputed": true
+  },
+  "requires": [
+    "resource-policy"
+  ]
+}

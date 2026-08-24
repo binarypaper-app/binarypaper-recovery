@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "compression-malformed-lzma",
+  "category": "negative-compression",
+  "title": "A valid .lzma header declaring a modest size, followed by a body that is not a valid range-coded stream.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 279,
+      "sha256": "7b9b86c75f9907b5d71620035df2981d20826f0960b7e86cc1efe8392de0e5fb",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "payload-package.bin",
+      "length": 141,
+      "sha256": "a794d027989b061f570d949e7ad947d706ba03c7cc0963f3ea69e6bbebd51885",
+      "role": "payload-package",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "compression.malformed",
+    "stage": "compression"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "hostile payload package wrapped in a real plaintext capsule: SHA-256 digest and frame CRC-32C values are all correct, so the capsule is valid up to the stage under test",
+    "mutation": "A valid .lzma header declaring a modest size, followed by a body that is not a valid range-coded stream.",
+    "crcRecomputed": true
+  }
+}

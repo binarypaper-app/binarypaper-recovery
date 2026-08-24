@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "package-unsupported-manifest-version",
+  "category": "negative-package",
+  "title": "Manifest version 2, which does not exist.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 279,
+      "sha256": "5f9d6711ca2f6c1c4d893e1c5de9ce196b7a63a024e4006a9f066a2b189bf05d",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "payload-package.bin",
+      "length": 265,
+      "sha256": "2fcf40230300c7f10336f9e55721d36532f877a9f6caec11dfdf357deb8f477f",
+      "role": "payload-package",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "package.manifest-invalid",
+    "stage": "package"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "hostile payload package wrapped in a real plaintext capsule: SHA-256 digest and frame CRC-32C values are all correct, so the capsule is valid up to the stage under test",
+    "mutation": "Manifest version 2, which does not exist.",
+    "crcRecomputed": true
+  }
+}

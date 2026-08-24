@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "package-traversal-path",
+  "category": "negative-package",
+  "title": "An entry path contains a \u0027..\u0027 segment.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 279,
+      "sha256": "9755225f3ee23712ea2259ef07b63fb68e4d74babeef504ecad215592126aa3a",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "payload-package.bin",
+      "length": 274,
+      "sha256": "3fd341611ecd1feda8e5284dd406fc4c1010b802e2eca5c37a5a51b9f4e4ea93",
+      "role": "payload-package",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "package.invalid-entry",
+    "stage": "package"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "hostile payload package wrapped in a real plaintext capsule: SHA-256 digest and frame CRC-32C values are all correct, so the capsule is valid up to the stage under test",
+    "mutation": "An entry path contains a \u0027..\u0027 segment.",
+    "crcRecomputed": true
+  }
+}

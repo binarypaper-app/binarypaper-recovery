@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "package-deflated-entry",
+  "category": "negative-package",
+  "title": "An entry uses DEFLATE; only stored (method 0) is allowed.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 279,
+      "sha256": "56d1010c53d67cd2ffd69583e189313da905ab470a4a17ae042e787482696fd4",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "payload-package.bin",
+      "length": 282,
+      "sha256": "bddab3fb08b327ff0e3d6900aa7972013a4332863840f4953d3f129e3ba37c38",
+      "role": "payload-package",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "package.invalid-entry",
+    "stage": "package"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "hostile payload package wrapped in a real plaintext capsule: SHA-256 digest and frame CRC-32C values are all correct, so the capsule is valid up to the stage under test",
+    "mutation": "An entry uses DEFLATE; only stored (method 0) is allowed.",
+    "crcRecomputed": true
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "package-invalid-utf8-note",
+  "category": "negative-package",
+  "title": "A text note whose bytes are not valid UTF-8.",
+  "operation": "recover",
+  "inputs": [
+    {
+      "path": "frame-0.bpq",
+      "length": 279,
+      "sha256": "5cf60898c492a366f25b638b73154fcce161fd51966909b1831a9953cedb860f",
+      "role": "frame",
+      "encoding": "binary"
+    },
+    {
+      "path": "payload-package.bin",
+      "length": 258,
+      "sha256": "58505c7cec95ebbf5f688e6e0bb44306e08daaf8be293c10353c5215e21a2d0e",
+      "role": "payload-package",
+      "encoding": "binary"
+    }
+  ],
+  "expected": {
+    "result": "package.invalid-entry",
+    "stage": "package"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Capsule.Tool write-public-suite",
+    "recipe": "hostile payload package wrapped in a real plaintext capsule: SHA-256 digest and frame CRC-32C values are all correct, so the capsule is valid up to the stage under test",
+    "mutation": "A text note whose bytes are not valid UTF-8.",
+    "crcRecomputed": true
+  }
+}
