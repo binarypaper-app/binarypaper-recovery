@@ -149,6 +149,16 @@
         }
       ]
     },
+    "requires": {
+      "description": "Optional conformance capabilities a reader must implement to run this vector. A reader that lacks one skips the vector and reports it as skipped, rather than failing it or silently counting it as passed. Used for behaviour the specification states as SHOULD, and for input surfaces a given reader is not meant to support.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["stable-recovery-profile-1", "resource-policy", "image-decoding"]
+      }
+    },
     "provenance": {
       "description": "How these bytes came to exist, so they can be regenerated or audited rather than trusted.",
       "type": "object",

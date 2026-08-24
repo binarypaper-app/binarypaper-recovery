@@ -11,31 +11,31 @@
       "id": "image-binary-payload-png",
       "category": "image",
       "manifest": "1.0/images/image-binary-payload-png/manifest.json",
-      "sha256": "c6c537bb6c8a6c2b0dc40eddb1efa78728ff6a34e5f200eff0ef095d28dca8d8"
+      "sha256": "e433666fb305aae6ca902a324302bc49a67284c96e9d686287bec46d21094f50"
     },
     {
       "id": "image-jpeg",
       "category": "image",
       "manifest": "1.0/images/image-jpeg/manifest.json",
-      "sha256": "1d13b83eeaa18e0635b30fe1adbe94fd58afd9ce69e890e51a296f92c9e19198"
+      "sha256": "2cf1bde93a1691d243fe18473be053189ceeef8f492abbc735231e23ded13394"
     },
     {
       "id": "image-multi-code-png",
       "category": "image",
       "manifest": "1.0/images/image-multi-code-png/manifest.json",
-      "sha256": "259de9e9ec726261ceb67db93e6aedc6704853db63d8c4605c7d77c0e1d71bf2"
+      "sha256": "9e4b9343ff7338a8590803994a51ecd7dcf4164447262a49d622ee4343fe7e33"
     },
     {
       "id": "image-rotated-png",
       "category": "image",
       "manifest": "1.0/images/image-rotated-png/manifest.json",
-      "sha256": "f8ac20c8dfa7540d1d4b88a53d54a22ddeb823484653800e36fa93bfb853e3d0"
+      "sha256": "030bc3d05c6dd53d3145a928ef98eb28a37cb20b77843cd1ef061ccf4ad22dee"
     },
     {
       "id": "image-single-page-png",
       "category": "image",
       "manifest": "1.0/images/image-single-page-png/manifest.json",
-      "sha256": "b2b330e4f37464b45fe95d05cebae2f89486d681a3df38e6f861d8d0006a6ddf"
+      "sha256": "5e6ab42f529f8348cf5ba07ad1eeb045ef517525fa8e239de6fd3b4e952f6735"
     },
     {
       "id": "auth-modified-gcm-tag",

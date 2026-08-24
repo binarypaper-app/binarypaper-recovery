@@ -205,6 +205,10 @@ int WriteSinglePage(
                 ["sha256"] = Sha256Hex(f)
             })])
         },
+        // Image decoding is a capability, not a baseline. A reader that only takes raw frames -
+        // the capsule tooling on the creator side, for instance - skips these rather than being
+        // counted as failing something it was never meant to do.
+        ["requires"] = new JsonArray("image-decoding"),
         ["provenance"] = new JsonObject
         {
             ["generator"] = "BinaryPaper.Recovery.ImageVectors",
