@@ -5,7 +5,7 @@
     "formatMinor": 0
   },
   "schema": "schema/vector-manifest.schema.json",
-  "vectorCount": 52,
+  "vectorCount": 54,
   "vectors": [
     {
       "id": "image-binary-payload-png",
@@ -14,10 +14,22 @@
       "sha256": "e433666fb305aae6ca902a324302bc49a67284c96e9d686287bec46d21094f50"
     },
     {
+      "id": "image-damaged-code-recoverable",
+      "category": "image-negative",
+      "manifest": "1.0/images/image-damaged-code-recoverable/manifest.json",
+      "sha256": "3f018e80df29bf1f588962ec704d5b0dfe6dfd617433c2ae7140433a00eb3fcd"
+    },
+    {
       "id": "image-jpeg",
       "category": "image",
       "manifest": "1.0/images/image-jpeg/manifest.json",
       "sha256": "2cf1bde93a1691d243fe18473be053189ceeef8f492abbc735231e23ded13394"
+    },
+    {
+      "id": "image-mixed-capsules",
+      "category": "image-negative",
+      "manifest": "1.0/images/image-mixed-capsules/manifest.json",
+      "sha256": "467c4b6bb3f038b94a0426eb6027e53dad989825649b0205c1872e44bff7e8b3"
     },
     {
       "id": "image-multi-code-png",

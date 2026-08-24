@@ -43,7 +43,8 @@
         "negative-compression",
         "negative-package",
         "negative-output",
-        "image"
+        "image",
+        "image-negative"
       ]
     },
     "title": {
@@ -108,6 +109,16 @@
         "displayName": {
           "description": "The manifest display name, for a successful recovery.",
           "type": "string"
+        },
+        "capsuleCount": {
+          "description": "For an image vector spanning more than one capsule, how many distinct capsules the decoded frames must group into. Pins that a reader separates them rather than merging.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "note": {
+          "description": "Why this vector exists, when the expectation alone does not make it obvious.",
+          "type": "string",
+          "maxLength": 300
         },
         "frameCount": {
           "description": "For a decode-image vector, how many QR symbols the page images must yield in total.",

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "image-mixed-capsules",
+  "category": "image-negative",
+  "title": "One page carrying codes from two different capsules. A reader must report both rather than silently merging them or picking the larger one.",
+  "operation": "decode-image",
+  "inputs": [
+    {
+      "path": "page-0.png",
+      "length": 11672,
+      "sha256": "d2606b68b90c83415a28785c7db3e22ad95c8a1fd25580839a8b745be484125b",
+      "role": "page-image"
+    }
+  ],
+  "requires": [
+    "image-decoding"
+  ],
+  "expected": {
+    "result": "session.multiple-capsules",
+    "stage": "session",
+    "frameCount": 2,
+    "capsuleCount": 2,
+    "note": "a reader must report both capsules rather than merging them or choosing one"
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Recovery.ImageVectors",
+    "recipe": "one frame from each of two different capsules rendered onto a single page",
+    "derivedFrom": "plaintext-text-note \u002B encrypted-file-tree"
+  }
+}

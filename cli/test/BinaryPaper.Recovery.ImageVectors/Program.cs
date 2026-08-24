@@ -64,6 +64,25 @@ written += WriteSinglePage(
     Path.Combine(vectorsRoot, "1.0", "positive", "plaintext-text-note"),
     ImageFormat.Jpeg, rotationQuarterTurns: 0, allOnOnePage: true);
 
+// ---------------------------------------------------------------- image negatives
+//
+// These pin behaviour a positive vector cannot: what happens when a page is partly unreadable, and
+// what happens when someone photographs two different backups together. Both are ordinary user
+// situations, not exotic attacks, which is exactly why they need pinning.
+
+written += WriteDamagedPage(
+    "image-damaged-code-recoverable",
+    "A page whose first code is scribbled out. The remaining codes plus a repair symbol must still "
+        + "recover the capsule - this is what the redundancy is for.",
+    Path.Combine(vectorsRoot, "1.0", "positive", "plaintext-text-note"));
+
+written += WriteMixedCapsules(
+    "image-mixed-capsules",
+    "One page carrying codes from two different capsules. A reader must report both rather than "
+        + "silently merging them or picking the larger one.",
+    Path.Combine(vectorsRoot, "1.0", "positive", "plaintext-text-note"),
+    Path.Combine(vectorsRoot, "1.0", "positive", "encrypted-file-tree"));
+
 MergeIntoAggregateManifest(outputRoot);
 
 Console.WriteLine($"Wrote {written} image vector(s) under {Path.Combine(outputRoot, "1.0", "images")}.");
@@ -91,7 +110,8 @@ void MergeIntoAggregateManifest(string suiteRoot)
     foreach (JsonNode? existing in aggregate["vectors"]!.AsArray())
     {
         // Drop any previous image entries; they are being rewritten below.
-        if (existing is JsonObject obj && obj["category"]?.GetValue<string>() != "image")
+        string? existingCategory = (existing as JsonObject)?["category"]?.GetValue<string>();
+        if (existing is JsonObject obj && existingCategory != "image" && existingCategory != "image-negative")
         {
             entries.Add(JsonNode.Parse(obj.ToJsonString())!);
         }
@@ -107,7 +127,7 @@ void MergeIntoAggregateManifest(string suiteRoot)
         entries.Add(new JsonObject
         {
             ["id"] = manifest["id"]!.GetValue<string>(),
-            ["category"] = "image",
+            ["category"] = JsonNode.Parse(File.ReadAllText(manifestPath))!["category"]!.GetValue<string>(),
             ["manifest"] = relative,
             ["sha256"] = Sha256Hex(File.ReadAllBytes(manifestPath))
         });
@@ -229,6 +249,146 @@ int WriteSinglePage(
     return 1;
 }
 
+
+/// <summary>
+/// Renders a page and then destroys one code, so a reader must recover from what is left.
+/// </summary>
+/// <remarks>
+/// The damage is a solid block over the first symbol's area rather than random noise. Noise
+/// sometimes still decodes, which would make the vector pass or fail depending on the decoder's
+/// error correction rather than on the rule under test.
+/// </remarks>
+int WriteDamagedPage(string id, string title, string sourceVectorDirectory)
+{
+    string[] framePaths = Directory.GetFiles(sourceVectorDirectory, "*.bpq");
+    Array.Sort(framePaths, StringComparer.Ordinal);
+    List<byte[]> frames = [.. framePaths.Select(File.ReadAllBytes)];
+
+    byte[] page = PageRenderer.Render(frames, rotationQuarterTurns: 0, ImageFormat.Png, obliterateFirstCode: true);
+
+    string directory = Path.Combine(outputRoot, "1.0", "images", id);
+    Directory.CreateDirectory(directory);
+    File.WriteAllBytes(Path.Combine(directory, "page-0.png"), page);
+
+    var reader = new PageImageReader();
+    PageImageResult result = reader.Read("page-0.png", page);
+
+    // The vector is only meaningful if the damage actually removed a code and left the rest usable.
+    if (result.Symbols.Count != frames.Count - 1)
+    {
+        throw new InvalidOperationException(
+            $"{id}: expected {frames.Count - 1} readable code(s) after damage, got {result.Symbols.Count}.");
+    }
+
+    // And only meaningful if what survives is still enough to recover.
+    var surviving = result.Symbols.Select(sym => ("page", sym.Payload)).ToList();
+    FrameIngestResult ingest = CapsuleRecovery.Ingest(surviving);
+    ScanSession session = ingest.Sessions.Single(x => x.Reference is not null);
+    RestoredContent restored = CapsuleRecovery.Recover(session, null, ResourcePolicy.Default);
+
+    WriteImageManifest(directory, id, "image-negative", title, "page-0.png", page,
+        new JsonObject
+        {
+            ["result"] = "success",
+            ["frameCount"] = result.Symbols.Count,
+            ["note"] = "one code is unreadable by design; the survivors must still recover the capsule",
+            ["payloadKind"] = restored.Kind switch
+            {
+                PayloadKind.TextNote => "text-note",
+                PayloadKind.SingleFile => "single-file",
+                _ => "file-tree"
+            }
+        },
+        $"frames of '{Path.GetFileName(sourceVectorDirectory)}' rendered to one page, then the first "
+        + "code's area filled solid black",
+        Path.GetFileName(sourceVectorDirectory));
+
+    Console.WriteLine($"  {id}: {result.Symbols.Count} of {frames.Count} code(s) readable, still recovers");
+    return 1;
+}
+
+/// <summary>Renders codes from two different capsules onto one page.</summary>
+int WriteMixedCapsules(string id, string title, string firstVectorDirectory, string secondVectorDirectory)
+{
+    byte[] first = File.ReadAllBytes(Directory.GetFiles(firstVectorDirectory, "*.bpq").OrderBy(x => x, StringComparer.Ordinal).First());
+    byte[] second = File.ReadAllBytes(Directory.GetFiles(secondVectorDirectory, "*.bpq").OrderBy(x => x, StringComparer.Ordinal).First());
+
+    byte[] page = PageRenderer.Render([first, second], rotationQuarterTurns: 0, ImageFormat.Png);
+
+    string directory = Path.Combine(outputRoot, "1.0", "images", id);
+    Directory.CreateDirectory(directory);
+    File.WriteAllBytes(Path.Combine(directory, "page-0.png"), page);
+
+    var reader = new PageImageReader();
+    PageImageResult result = reader.Read("page-0.png", page);
+
+    if (result.Symbols.Count != 2)
+    {
+        throw new InvalidOperationException($"{id}: expected 2 codes, decoded {result.Symbols.Count}.");
+    }
+
+    FrameIngestResult ingest = CapsuleRecovery.Ingest(
+        [.. result.Symbols.Select(sym => ("page", sym.Payload))]);
+
+    int capsuleCount = ingest.Sessions.Count(x => x.Reference is not null);
+    if (capsuleCount != 2)
+    {
+        throw new InvalidOperationException(
+            $"{id}: the two codes must group into 2 capsules, got {capsuleCount}. "
+            + "If this is 1, sessions are merging capsules that must stay separate.");
+    }
+
+    WriteImageManifest(directory, id, "image-negative", title, "page-0.png", page,
+        new JsonObject
+        {
+            ["result"] = "session.multiple-capsules",
+            ["stage"] = "session",
+            ["frameCount"] = 2,
+            ["capsuleCount"] = 2,
+            ["note"] = "a reader must report both capsules rather than merging them or choosing one"
+        },
+        "one frame from each of two different capsules rendered onto a single page",
+        $"{Path.GetFileName(firstVectorDirectory)} + {Path.GetFileName(secondVectorDirectory)}");
+
+    Console.WriteLine($"  {id}: 2 code(s) from {capsuleCount} distinct capsules");
+    return 1;
+}
+
+void WriteImageManifest(
+    string directory, string id, string category, string title,
+    string imageName, byte[] page, JsonObject expected, string recipe, string derivedFrom)
+{
+    var manifest = new JsonObject
+    {
+        ["schemaVersion"] = 1,
+        ["protocol"] = new JsonObject { ["formatMajor"] = 1, ["formatMinor"] = 0 },
+        ["id"] = id,
+        ["category"] = category,
+        ["title"] = title,
+        ["operation"] = "decode-image",
+        ["inputs"] = new JsonArray(new JsonObject
+        {
+            ["path"] = imageName,
+            ["length"] = page.Length,
+            ["sha256"] = Sha256Hex(page),
+            ["role"] = "page-image"
+        }),
+        ["requires"] = new JsonArray("image-decoding"),
+        ["expected"] = expected,
+        ["provenance"] = new JsonObject
+        {
+            ["generator"] = "BinaryPaper.Recovery.ImageVectors",
+            ["recipe"] = recipe,
+            ["derivedFrom"] = derivedFrom
+        }
+    };
+
+    File.WriteAllText(
+        Path.Combine(directory, "manifest.json"),
+        manifest.ToJsonString(new JsonSerializerOptions { WriteIndented = true }).Replace("\r\n", "\n") + "\n",
+        new UTF8Encoding(false));
+}
+
 static string Sha256Hex(byte[] bytes) => Convert.ToHexStringLower(SHA256.HashData(bytes));
 
 internal enum ImageFormat
@@ -257,7 +417,9 @@ internal static class PageRenderer
     private const int Columns = 3;
     private const int Gap = 24;
 
-    public static byte[] Render(IReadOnlyList<byte[]> frames, int rotationQuarterTurns, ImageFormat format)
+    public static byte[] Render(
+        IReadOnlyList<byte[]> frames, int rotationQuarterTurns, ImageFormat format,
+        bool obliterateFirstCode = false)
     {
         List<bool[,]> matrices = [.. frames.Select(EncodeMatrix)];
 
@@ -278,6 +440,20 @@ internal static class PageRenderer
             int originX = Gap + (column * (cell + Gap));
             int originY = Gap + (row * (cell + Gap));
             Blit(page, width, matrices[i], originX, originY);
+        }
+
+        if (obliterateFirstCode)
+        {
+            // A solid block over the whole first cell, not noise. Noise sometimes still decodes,
+            // which would make the vector's outcome depend on the decoder's error correction rather
+            // than on the rule under test.
+            for (int y = Gap; y < Gap + cell && y < height; y++)
+            {
+                for (int x = Gap; x < Gap + cell && x < width; x++)
+                {
+                    page[(y * width) + x] = 0;
+                }
+            }
         }
 
         for (int turn = 0; turn < (rotationQuarterTurns % 4 + 4) % 4; turn++)

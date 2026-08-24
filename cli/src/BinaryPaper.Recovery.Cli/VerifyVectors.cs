@@ -195,7 +195,7 @@ internal static class VerifyVectors
     private static void VerifyImage(string directory, JsonElement root, JsonElement expected)
     {
         var reader = new PageImageReader();
-        var decodedHashes = new List<string>();
+        var decoded = new List<byte[]>();
 
         foreach (JsonElement input in root.GetProperty("inputs").EnumerateArray())
         {
@@ -208,24 +208,73 @@ internal static class VerifyVectors
                 throw new InvalidOperationException($"image '{path}': {result.Failure}");
             }
 
-            decodedHashes.AddRange(result.Symbols.Select(sym => Sha256Hex(sym.Payload)));
+            decoded.AddRange(result.Symbols.Select(sym => sym.Payload));
         }
 
         int expectedCount = expected.GetProperty("frameCount").GetInt32();
-        if (decodedHashes.Count != expectedCount)
+        if (decoded.Count != expectedCount)
         {
             throw new InvalidOperationException(
-                $"decoded {decodedHashes.Count} QR code(s), expected {expectedCount}");
+                $"decoded {decoded.Count} QR code(s), expected {expectedCount}");
         }
 
-        foreach (JsonElement frame in expected.GetProperty("frames").EnumerateArray())
+        // Where the manifest names exact frames, compare by hash. A decoder that finds the right
+        // number of symbols but recodes a payload through text passes a count check and fails here.
+        if (expected.TryGetProperty("frames", out JsonElement frames))
         {
-            string hash = frame.GetProperty("sha256").GetString()!;
-            if (!decodedHashes.Remove(hash))
+            var hashes = decoded.Select(Sha256Hex).ToList();
+            foreach (JsonElement frame in frames.EnumerateArray())
+            {
+                string hash = frame.GetProperty("sha256").GetString()!;
+                if (!hashes.Remove(hash))
+                {
+                    throw new InvalidOperationException(
+                        $"no decoded QR payload matched the expected frame {hash[..12]}...; "
+                        + "a payload was probably recoded through text");
+                }
+            }
+        }
+
+        FrameIngestResult ingest = CapsuleRecovery.Ingest([.. decoded.Select(d => ("image", d))]);
+        List<ScanSession> sessions = [.. ingest.Sessions.Where(x => x.Reference is not null)];
+
+        // How many distinct capsules the codes must group into. This is what separates "one page of
+        // one backup" from "someone photographed two backups together".
+        if (expected.TryGetProperty("capsuleCount", out JsonElement capsuleCount)
+            && sessions.Count != capsuleCount.GetInt32())
+        {
+            throw new InvalidOperationException(
+                $"codes grouped into {sessions.Count} capsule(s), expected {capsuleCount.GetInt32()}");
+        }
+
+        string expectedResult = expected.GetProperty("result").GetString()!;
+
+        if (expectedResult == "session.multiple-capsules")
+        {
+            if (sessions.Count < 2)
             {
                 throw new InvalidOperationException(
-                    $"no decoded QR payload matched the expected frame {hash[..12]}...; "
-                    + "a payload was probably recoded through text");
+                    "expected more than one capsule, but the codes merged into a single session");
+            }
+
+            return;
+        }
+
+        // A page vector that claims to still recover must actually still recover: a damaged-code
+        // vector proves nothing if nobody runs the survivors through the pipeline.
+        if (expectedResult == "success" && expected.TryGetProperty("payloadKind", out JsonElement kind))
+        {
+            RestoredContent restored = CapsuleRecovery.Recover(sessions.Single(), null, ResourcePolicy.Default);
+            string actual = restored.Kind switch
+            {
+                PayloadKind.TextNote => "text-note",
+                PayloadKind.SingleFile => "single-file",
+                _ => "file-tree"
+            };
+
+            if (actual != kind.GetString())
+            {
+                throw new InvalidOperationException($"payload kind {actual} != {kind.GetString()}");
             }
         }
     }
