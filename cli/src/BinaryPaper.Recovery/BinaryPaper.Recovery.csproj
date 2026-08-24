@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>BinaryPaper.Recovery</RootNamespace>
+    <Description>Recovery-only implementation of the BinaryPaper capsule protocol.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BinaryPaper.Recovery.Codecs\BinaryPaper.Recovery.Codecs.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Argon2id. AES-GCM, SHA-256 and ZIP come from the framework. -->
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.6.2" />
+    <!-- LZMA decode for the legacy .lzma alone container. Decode only; this tool never writes. -->
+    <PackageReference Include="SharpCompress" Version="0.49.1" />
+  </ItemGroup>
+
+</Project>

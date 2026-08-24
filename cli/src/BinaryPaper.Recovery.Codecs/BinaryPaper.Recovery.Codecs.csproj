@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Vendored upstream source, kept verbatim.
+
+         It lives in its own project so the boundary is explicit and so this repository's
+         stricter settings do not force edits to files that must stay byte-identical to their
+         upstream. The upstream libraries predate nullable reference types and target
+         netstandard2.0, so nullable analysis is off here and only here. -->
+    <Nullable>disable</Nullable>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);CS1591;CS8600;CS8601;CS8602;CS8603;CS8604;CS8625</NoWarn>
+    <Description>Vendored erasure-code implementations used by BinaryPaper recovery.</Description>
+  </PropertyGroup>
+
+</Project>

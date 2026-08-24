@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="src/BinaryPaper.Recovery.Codecs/BinaryPaper.Recovery.Codecs.csproj" />
+  <Project Path="src/BinaryPaper.Recovery/BinaryPaper.Recovery.csproj" />
+  <Project Path="src/BinaryPaper.Recovery.Cli/BinaryPaper.Recovery.Cli.csproj" />
+  <Project Path="test/BinaryPaper.Recovery.Tests/BinaryPaper.Recovery.Tests.csproj" />
+</Solution>

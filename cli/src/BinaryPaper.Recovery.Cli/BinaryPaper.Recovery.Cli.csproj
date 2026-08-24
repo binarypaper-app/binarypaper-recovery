@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>BinaryPaper.Recovery.Cli</RootNamespace>
+    <AssemblyName>binarypaper</AssemblyName>
+    <Description>Reference recovery tool for the BinaryPaper capsule protocol.</Description>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BinaryPaper.Recovery\BinaryPaper.Recovery.csproj" />
+  </ItemGroup>
+
+</Project>
