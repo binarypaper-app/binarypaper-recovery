@@ -5,9 +5,9 @@
 
 .DESCRIPTION
     This is the acceptance test for the product promise. Everything else in this repository is
-    machinery that supports one claim - that a printed backup can be recovered without BinaryPaper,
-    without an account, and without a network. This drill is where that claim is either true or it
-    is not.
+    machinery that supports one claim - that a printed backup can be recovered without BinaryPaper
+    or a network, with recovery data processed locally. This drill is where that claim is either
+    true or it is not.
 
     It deliberately uses only:
 

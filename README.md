@@ -21,8 +21,8 @@ recovery half of the system is published in full:
 1. every byte needed to recover a stable BinaryPaper capsule;
 2. positive and negative conformance vectors that pin the exact accept/reject
    behavior;
-3. recovery from scanned or photographed pages with no account, no server, no
-   entitlement, and no BinaryPaper application; and
+3. recovery from scanned or photographed pages entirely offline, independent of
+   BinaryPaper servers, entitlements, and applications; and
 4. source you can build, audit, fork, and redistribute.
 
 ## What this is not

@@ -127,7 +127,7 @@ jobs:
             ## What this is
 
             An open recovery specification and a reference recovery tool. It reads page images
-            (PNG/JPEG) and raw frame files, works entirely offline, and needs no account.
+            (PNG/JPEG) and raw frame files, works entirely offline, and processes recovery data locally.
 
             BinaryPaper itself is not open source; this is the recovery surface only.
           fail_on_unmatched_files: true
