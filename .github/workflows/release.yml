@@ -1,0 +1,133 @@
+name: Release
+
+# Builds and publishes a recovery kit release.
+#
+# Triggered only by pushing a `recovery-kit-v*` tag. That is deliberate: publishing is an
+# irreversible act - a release tag and its assets are immutable once people have downloaded them -
+# and it should require someone to deliberately create a tag, never happen as a side effect of a
+# merge.
+#
+# The whole audience for these artifacts is someone recovering a backup, possibly years from now,
+# possibly offline. So this workflow refuses to publish anything that has not passed the conformance
+# suite, the publication audit, and an offline drill on the artifact it is about to publish.
+
+on:
+  push:
+    tags: ['recovery-kit-v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (does not publish)'
+        required: true
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  verify:
+    name: verify before building
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # A release must not be able to skip these. They are separate steps so a failure names
+      # exactly which promise would have been broken.
+      - name: Conformance suite
+        run: |
+          dotnet build cli/BinaryPaper.Recovery.slnx -c Release
+          dotnet run --project cli/src/BinaryPaper.Recovery.Cli -c Release --no-build -- verify-vectors vectors
+
+      - name: Publication audit
+        shell: pwsh
+        run: ./tools/publication-audit.ps1
+
+  release:
+    name: build and publish
+    runs-on: ubuntu-latest
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Resolve version
+        id: version
+        shell: pwsh
+        run: |
+          $version = if ($env:GITHUB_REF -like 'refs/tags/recovery-kit-v*') {
+            $env:GITHUB_REF -replace '^refs/tags/recovery-kit-v', ''
+          } else {
+            '${{ github.event.inputs.version }}'
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Build artifacts
+        shell: pwsh
+        run: ./tools/build-release.ps1 -Version '${{ steps.version.outputs.version }}' -OutputDirectory artifacts
+
+      - name: Offline recovery drill against the built artifact
+        shell: pwsh
+        run: |
+          $manifest = Get-Content vectors/1.0/positive/plaintext-text-note/manifest.json | ConvertFrom-Json
+          $expected = $manifest.expected.outputs[0].sha256
+          ./tools/offline-drill.ps1 `
+            -ArtifactsDirectory artifacts `
+            -RuntimeIdentifier linux-x64 `
+            -ImagesDirectory vectors/1.0/images/image-multi-code-png `
+            -ExpectedSha256 $expected
+
+      # Keyless build provenance, tied to this commit and this workflow. It lets someone verify that
+      # an archive was produced here from this source, rather than trusting whoever handed it to
+      # them - which is the whole point for a tool people download to recover their own data.
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: 'artifacts/*.zip'
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/recovery-kit-v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/*.zip
+            artifacts/SHA256SUMS
+            artifacts/*.spdx.json
+          body: |
+            BinaryPaper Recovery Kit ${{ steps.version.outputs.version }}
+
+            Recovers **capsule wire version 1.0**.
+
+            ## Verify before you run it
+
+            ```
+            sha256sum -c SHA256SUMS
+            ```
+
+            Every archive also carries its own LICENSE and NOTICE, so a binary downloaded on its
+            own still comes with the terms it is offered under.
+
+            Build provenance is attested and can be checked with:
+
+            ```
+            gh attestation verify <archive> --repo ${{ github.repository }}
+            ```
+
+            ## What this is
+
+            An open recovery specification and a reference recovery tool. It reads page images
+            (PNG/JPEG) and raw frame files, works entirely offline, and needs no account.
+
+            BinaryPaper itself is not open source; this is the recovery surface only.
+          fail_on_unmatched_files: true
