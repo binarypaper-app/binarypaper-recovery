@@ -9,6 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- The fixture *encoder*. Deliberately not the decoder under test: a vector suite says more
+         when the encoder that produced a fixture is not the reader being checked against it.
+         Test tooling, never shipped, and absent from the release SBOM. -->
+    <PackageReference Include="ZXing.Net" Version="0.16.11" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\BinaryPaper.Recovery\BinaryPaper.Recovery.csproj" />
   </ItemGroup>
 

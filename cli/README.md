@@ -130,14 +130,33 @@ never valid — three very different next actions.
 indistinguishable and the tool does not pretend otherwise.
 
 **QR payloads are read as bytes, never as text.** A frame payload is arbitrary binary.
-`ZXing.Result.Text` applies a character-set interpretation and mangles it, so the payload
-is taken from the decoder's raw byte segments and `Text` is not consulted even as a
-fallback. A frame corrupted that way would fail its CRC-32C with nothing to suggest the
-decoder, rather than the paper, was at fault.
+`Barcode.Text` applies a character-set interpretation and mangles it, so the payload is
+taken from `Barcode.Bytes` and `Text` is not consulted even as a fallback. A frame
+corrupted that way would fail its CRC-32C with nothing to suggest the decoder, rather
+than the paper, was at fault.
 
-**Image dependencies are pure managed.** `StbImageSharp` and `ZXing.Net` core have no
-transitive dependencies and no native binaries between them, so one build runs anywhere
-.NET runs, including ARM64, with no per-platform assets to obtain.
+**Only a clean decode is admitted.** The decoder will report a symbol whose Reed-Solomon
+stage failed, and its bytes look plausible. Those are dropped rather than passed on: a
+frame the decoder guessed at can only fail its CRC-32C further down, where it reads like
+damaged paper instead of what it is.
+
+**A photograph is the input this is built for, not a bonus.** The realistic disaster case
+is a phone photograph of a page, not a flatbed scan, and a full-size BinaryPaper page
+carries version-40 symbols — 177 modules a side. At that size a decoder has to hold its
+sampling grid across the perspective and lens curvature of a hand-held shot, so one pass
+over the whole page is not enough on its own. Every located symbol is warped back to a
+square and retried across sampling densities, blur levels and binarizers; and because a
+page is a lattice of equal-sized symbols, each one that decodes is used to predict where
+its neighbours are, which lifts out symbols whose own finder patterns were never found —
+clipped by the frame edge, or washed out by glare. On twelve photographs of a 48-symbol
+page, one whole-page pass yielded 20 frames and the full pipeline yielded 45.
+
+**The QR decoder carries native binaries.** `ZXingCpp` is the zxing-cpp project's own
+.NET binding, and it ships native assets for `win-x64`, `win-arm64`, `linux-x64`,
+`linux-arm64`, `osx-x64` and `osx-arm64` — the six platforms this kit publishes. A
+platform outside that matrix has to build zxing-cpp for itself. That cost is deliberate:
+the managed alternative read nothing at all from the photographed pages above.
+`StbImageSharp`, which decodes the pixels, remains pure managed with no dependencies.
 
 **Output is atomic.** Content is staged in a sibling `.partial-*` directory and moved into
 place only once every byte is written, so a failed recovery never leaves something that

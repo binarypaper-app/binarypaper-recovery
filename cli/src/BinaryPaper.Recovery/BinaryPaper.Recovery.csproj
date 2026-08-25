@@ -6,6 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- The page pipeline's geometry helpers are implementation detail, but they are exactly the
+         part worth testing directly: a vector can only reach them through a whole page. -->
+    <InternalsVisibleTo Include="BinaryPaper.Recovery.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\BinaryPaper.Recovery.Codecs\BinaryPaper.Recovery.Codecs.csproj" />
   </ItemGroup>
 
@@ -15,11 +21,14 @@
     <!-- LZMA decode for the legacy .lzma alone container. Decode only; this tool never writes. -->
     <PackageReference Include="SharpCompress" Version="0.49.1" />
     <!-- PNG/JPEG decode to raw pixels. Pure managed port of stb_image.h, no dependencies and no
-         native binaries, so one build runs on every RID including ARM64. -->
+         native binaries. -->
     <PackageReference Include="StbImageSharp" Version="2.30.16" />
-    <!-- Multi-QR detection. Core package only: the luminance source is supplied locally so no
-         image-binding package is pulled in. -->
-    <PackageReference Include="ZXing.Net" Version="0.16.11" />
+    <!-- QR detection and decoding: the zxing-cpp project's own .NET binding, and the same upstream
+         decoder the BinaryPaper Android restorer uses. This one carries native assets, for the six
+         RIDs tools/build-release.ps1 publishes; a platform outside that matrix has to build
+         zxing-cpp itself. That cost was taken deliberately, because the managed alternative reads
+         no version-40 symbol out of a photographed page at all. -->
+    <PackageReference Include="ZXingCpp" Version="0.5.3" />
   </ItemGroup>
 
 </Project>

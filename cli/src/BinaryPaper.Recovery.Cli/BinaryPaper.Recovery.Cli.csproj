@@ -7,6 +7,11 @@
     <Description>Reference recovery tool for the BinaryPaper capsule protocol.</Description>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
+    <!-- The QR decoder is native, and by default a single-file publish leaves its library sitting
+         beside the executable. This tool's whole point is that one file can be kept with the paper
+         and still work years later, so the native library is embedded and self-extracted at start
+         rather than left as a sibling someone can lose. -->
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
 
   <ItemGroup>

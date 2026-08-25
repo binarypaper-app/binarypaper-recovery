@@ -35,9 +35,9 @@ $packages = @(
     @{ name = 'StbImageSharp'; version = '2.30.16'; licence = 'Unlicense OR MIT'
        purpose = 'PNG and JPEG decoding'
        url = 'https://www.nuget.org/packages/StbImageSharp/2.30.16' }
-    @{ name = 'ZXing.Net'; version = '0.16.11'; licence = 'Apache-2.0'
-       purpose = 'multi-QR detection and decoding'
-       url = 'https://www.nuget.org/packages/ZXing.Net/0.16.11' }
+    @{ name = 'ZXingCpp'; version = '0.5.3'; licence = 'Apache-2.0'
+       purpose = 'QR detection and decoding; ships native assets for six runtime identifiers'
+       url = 'https://www.nuget.org/packages/ZXingCpp/0.5.3' }
 )
 
 $vendored = @(

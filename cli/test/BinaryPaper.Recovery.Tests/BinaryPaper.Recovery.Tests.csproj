@@ -12,6 +12,17 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Encoder only, for synthesising a page to read back. Test tooling; never shipped. -->
+    <PackageReference Include="ZXing.Net" Version="0.16.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Shared with the image-vector generator rather than copied: two PNG encoders that drift
+         apart would make a failure here mean nothing. -->
+    <Compile Include="..\BinaryPaper.Recovery.ImageVectors\PngWriter.cs" Link="PngWriter.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\BinaryPaper.Recovery\BinaryPaper.Recovery.csproj" />
   </ItemGroup>
 
