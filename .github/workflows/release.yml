@@ -119,6 +119,12 @@ jobs:
             sha256sum -c SHA256SUMS
             ```
 
+            On Linux and macOS, a zip does not carry the executable bit, so after unpacking:
+
+            ```
+            chmod +x binarypaper
+            ```
+
             Every archive also carries its own LICENSE and NOTICE, so a binary downloaded on its
             own still comes with the terms it is offered under.
 

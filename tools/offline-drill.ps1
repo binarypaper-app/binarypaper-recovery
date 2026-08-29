@@ -90,6 +90,15 @@ try {
 
     Write-Host '   LICENSE and NOTICE present in the archive'
 
+    # A zip does not carry the Unix executable bit, so on Linux and macOS the extracted binary
+    # arrives without permission to run. This is the same step a real user takes, and doing it here
+    # rather than hiding it is the point: the drill should walk the path the instructions describe.
+    if (-not $IsWindows) {
+        chmod +x $executable.FullName
+        if ($LASTEXITCODE -ne 0) { throw "could not make $($executable.FullName) executable" }
+        Write-Host '   made the binary executable (a zip does not carry that bit)'
+    }
+
     # ------------------------------------------------------------- copy images out of the repo
     Write-Host "`n3. Copy page images to scratch (nothing else from the repository)"
     $imagesCopy = Join-Path $scratch 'pages'

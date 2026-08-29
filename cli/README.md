@@ -17,6 +17,10 @@ dotnet run --project cli/src/BinaryPaper.Recovery.Cli -- --help
 Requires the .NET 10 SDK. No private feed, no private path, no network access at build
 or run time.
 
+Or use a release archive, which needs no SDK — it is one self-contained executable. On
+Linux and macOS, unpack it and make it executable first: a zip carries no executable bit,
+so `chmod +x binarypaper` is a necessary step, not a workaround.
+
 ## Commands
 
 ```text
