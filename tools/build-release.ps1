@@ -35,6 +35,14 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
+
+# The version reaches the build as -p:Version, where NuGet parses it during restore. A value it
+# cannot parse fails several minutes later as "RestoreTask returned false but did not log an
+# error", which says nothing about the actual mistake. Say it here instead.
+if ($Version -notmatch '^\d+\.\d+\.\d+(\.\d+)?([-+][0-9A-Za-z.-]+)*$') {
+    throw "'$Version' is not a usable version. Expected something like 1.0.0, or 0.0.0-ci for a test build."
+}
+
 Push-Location $repoRoot
 
 try {

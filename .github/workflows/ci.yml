@@ -122,7 +122,9 @@ jobs:
 
       - name: Build release artifacts
         shell: pwsh
-        run: ./tools/build-release.ps1 -Version ci -OutputDirectory artifacts -RuntimeIdentifiers @('linux-x64')
+        # A real version string: it reaches the build as -p:Version, which NuGet parses, and
+        # "ci" is not a version. The drill is about the archive, not the number on it.
+        run: ./tools/build-release.ps1 -Version 0.0.0-ci -OutputDirectory artifacts -RuntimeIdentifiers @('linux-x64')
 
       - name: Offline recovery drill
         shell: pwsh
