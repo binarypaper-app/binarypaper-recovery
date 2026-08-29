@@ -79,13 +79,21 @@ foreach ($component in $components.vendored) {
 #
 # A self-contained publish embeds the runtime, so its terms come with the archive. The runtime pack
 # carries both files; a publish does not copy them, which is exactly how they go missing.
-$packRoot = Join-Path $env:USERPROFILE ".nuget/packages/microsoft.netcore.app.runtime.$RuntimeIdentifier"
-if (-not (Test-Path -LiteralPath $packRoot)) {
-    $packRoot = Join-Path $HOME ".nuget/packages/microsoft.netcore.app.runtime.$RuntimeIdentifier"
+#
+# The package root is resolved the way NuGet resolves it, and cross-platform:
+# GetFolderPath('UserProfile') is $HOME on Unix and %USERPROFILE% on Windows, where reading the
+# environment variable directly yields null on the other platform.
+$packageRoot = if ($env:NUGET_PACKAGES) {
+    $env:NUGET_PACKAGES
+}
+else {
+    Join-Path ([Environment]::GetFolderPath('UserProfile')) '.nuget/packages'
 }
 
+$packRoot = Join-Path $packageRoot "microsoft.netcore.app.runtime.$RuntimeIdentifier"
+
 if (-not (Test-Path -LiteralPath $packRoot)) {
-    throw "no .NET runtime pack found for $RuntimeIdentifier; publish it before writing notices"
+    throw "no .NET runtime pack for $RuntimeIdentifier under $packageRoot; publish it before writing notices"
 }
 
 # Highest version present: the publish restored it, and a stale sibling must not win.
