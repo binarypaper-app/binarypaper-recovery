@@ -16,10 +16,22 @@
 
 .PARAMETER SkipHistory
     Scan only the working tree. For fast iteration during development; never for a release.
+
+.PARAMETER PatternFile
+    Where to read the private-reference patterns from. Defaults to tools/private-patterns.txt, and
+    falls back to the BP_PRIVATE_REFERENCE_PATTERNS environment variable, which is how CI supplies
+    the list without the repository carrying it.
+
+.PARAMETER AllowMissingPatterns
+    Treat an absent pattern list as "this run cannot clear the repository" without failing. For the
+    one context where that is correct: a pull request from a fork, which by design receives no
+    secrets, and which is not the run that authorises a release. Never for a release.
 #>
 [CmdletBinding()]
 param(
-    [switch]$SkipHistory
+    [switch]$SkipHistory,
+    [string]$PatternFile,
+    [switch]$AllowMissingPatterns
 )
 
 $ErrorActionPreference = 'Stop'
@@ -46,18 +58,37 @@ Write-Host "`n1. Private references in tracked files"
 # flag itself forever. Keeping the list external means the published tool contains nothing private
 # and stays useful to anyone auditing their own fork.
 #
-# The file is untracked here; maintainers get it from the private working set.
-$patternFile = Join-Path $PSScriptRoot 'private-patterns.txt'
+# The file is untracked here; maintainers get it from the private working set, and CI gets the
+# same list from a secret. Neither route puts it in the published repository.
+$patternFile = if ($PatternFile) { $PatternFile } else { Join-Path $PSScriptRoot 'private-patterns.txt' }
 $privatePatterns = @()
+$patternSource = $null
 
 if (Test-Path -LiteralPath $patternFile) {
     $privatePatterns = Get-Content -LiteralPath $patternFile |
         Where-Object { $_.Trim() -and -not $_.TrimStart().StartsWith('#') }
-    Write-Host "   $($privatePatterns.Count) pattern(s) from $(Split-Path -Leaf $patternFile)"
+    $patternSource = Split-Path -Leaf $patternFile
+}
+elseif ($env:BP_PRIVATE_REFERENCE_PATTERNS) {
+    $privatePatterns = $env:BP_PRIVATE_REFERENCE_PATTERNS -split "`r?`n" |
+        Where-Object { $_.Trim() -and -not $_.TrimStart().StartsWith('#') }
+    $patternSource = 'BP_PRIVATE_REFERENCE_PATTERNS'
+}
+
+if ($privatePatterns.Count -gt 0) {
+    Write-Host "   $($privatePatterns.Count) pattern(s) from $patternSource"
+}
+elseif ($AllowMissingPatterns) {
+    # A fork's pull request never receives secrets. Failing it here would put a permanent red mark
+    # on every outside contribution for a check that is not about their change - and the run that
+    # actually gates publication does not pass this switch.
+    Write-Host '   no pattern list available - private-reference scan skipped for this run'
+    Write-Host '   (this run cannot clear the repository for publication, and is not meant to)'
 }
 else {
-    Write-Host '   no private-patterns.txt found - skipping private-reference scan'
-    Add-Finding 'audit' 'private-patterns.txt is absent; this run cannot clear the repository for publication'
+    Write-Host '   no pattern list found - skipping private-reference scan'
+    Add-Finding 'audit' ('no private-reference pattern list (tools/private-patterns.txt or ' +
+        'BP_PRIVATE_REFERENCE_PATTERNS); this run cannot clear the repository for publication')
 }
 
 $tracked = git ls-files
@@ -146,6 +177,45 @@ if ($missingSpdx.Count -gt 0) {
 }
 
 Write-Host "   checked $($sourceFiles.Count) first-party source file(s)"
+
+# Every component the archives contain must have notice text to ship with it. NOTICE promises a
+# THIRD-PARTY-NOTICES file, and the release archives are a single self-contained binary with the
+# dependencies and the .NET runtime inside - so the obligation is real and easy to lose track of
+# the next time a dependency changes. This is the check that noticed it was missing.
+$componentsPath = 'third-party/components.json'
+if (-not (Test-Path -LiteralPath $componentsPath)) {
+    Add-Finding 'licence' "missing required file: $componentsPath"
+}
+else {
+    $components = Get-Content -LiteralPath $componentsPath -Raw | ConvertFrom-Json
+
+    foreach ($component in $components.packages) {
+        if (-not $component.notice) {
+            Add-Finding 'licence' "third-party component $($component.name) declares no notice file"
+            continue
+        }
+
+        $noticePath = Join-Path 'third-party/notices' $component.notice
+        if (-not (Test-Path -LiteralPath $noticePath)) {
+            Add-Finding 'licence' "third-party component $($component.name) has no notice text at $noticePath"
+        }
+    }
+
+    # The build's own dependency list is the authority on what ships. A package added there and not
+    # here would be redistributed with no notice at all.
+    $declared = @($components.packages | ForEach-Object { $_.name })
+    $referenced = Select-String -Path 'cli/src/BinaryPaper.Recovery/BinaryPaper.Recovery.csproj' `
+        -Pattern '<PackageReference Include="([^"]+)"' -AllMatches |
+        ForEach-Object { $_.Matches } | ForEach-Object { $_.Groups[1].Value }
+
+    foreach ($package in $referenced) {
+        if ($declared -notcontains $package) {
+            Add-Finding 'licence' "$package is referenced by the shipped library but is not in $componentsPath"
+        }
+    }
+
+    Write-Host "   checked $($declared.Count) third-party notice(s) against the build"
+}
 
 # --------------------------------------------------------------- fixture hygiene
 Write-Host "`n4. Fixture hygiene"

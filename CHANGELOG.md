@@ -18,12 +18,35 @@ version 1.0** (`format_major = 1`, `format_minor = 0`).
 
 ### Added
 
+- **The specification.** `protocol/1.0/` defines capsule wire version 1.0 byte by byte,
+  with the required reader behaviour, the validation order, the stable failure categories,
+  and the threat model in `SECURITY-CONSIDERATIONS.md`. `protocol/registries/` pins the
+  algorithm and recovery-profile identifiers.
+- **The conformance suite.** 54 machine-checkable vectors — 7 positive, 40 negative, 5
+  image and 2 image-negative — each with a manifest, all hash-pinned from a single
+  aggregate `MANIFEST.json`.
+- **The reference recovery tool.** `binarypaper inspect`, `recover` and `verify-vectors`,
+  reading PNG/JPEG page images and raw `.bpq` frames, entirely offline.
+- **Release machinery.** Self-contained archives for six platforms, a source archive, an
+  SPDX SBOM, `SHA256SUMS`, a publication audit over the tree and the full history, a vector
+  integrity check, and an offline recovery drill run against the artifact being published.
 - Repository governance: license, notice, security policy, contribution terms, and
   trademark terms.
 - Recovery from photographed pages, not only scanned ones. Every located symbol is
   rectified and retried across sampling densities, blur levels and binarizers, and a
   symbol that decodes is used to predict its lattice neighbours, so symbols whose own
   finder patterns were never detected are still lifted out of the page.
+- **A time bound on page-image decoding**, defaulting to 120 seconds and configurable with
+  `--max-image-seconds` (`0` disables it). The retry ladder above stops at the first clean
+  decode, so it costs least on pages that read and most on pages that do not — which makes
+  an ordinary photograph of something that is not a page the expensive input. Neither the
+  byte cap nor the pixel cap bounds that: the most expensive legitimate page measured is a
+  1.4 MB file. When the bound is reached, the page reports the codes it had already
+  decoded and says it stopped early.
+- **Progress reporting while a page is worked**, so a slow page is visibly alive.
+- `THIRD-PARTY-NOTICES` in every release archive, assembled from `third-party/` and from
+  the .NET runtime pack the archive was published against. The archives are a single
+  self-contained binary, so the terms of everything inside it travel with it.
 
 ### Changed
 

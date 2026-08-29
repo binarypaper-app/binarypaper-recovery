@@ -66,6 +66,15 @@ try {
 
         Copy-Item (Join-Path $repoRoot 'protocol/1.0/codecs/NOTICE') (Join-Path $stage 'NOTICE.codecs')
 
+        # The archive is one self-contained binary with its dependencies and the .NET runtime
+        # inside it. Their MIT and Apache-2.0 terms require the notices to travel with the code,
+        # and NOTICE promises this file by name.
+        & (Join-Path $PSScriptRoot 'write-third-party-notices.ps1') `
+            -RuntimeIdentifier $rid `
+            -OutputPath (Join-Path $stage 'THIRD-PARTY-NOTICES')
+
+        if ($LASTEXITCODE -ne 0) { throw "third-party notices failed for $rid" }
+
         # Debug symbols are not part of a release archive. They carry no secret, but they are
         # noise in an artifact whose whole point is that a user can verify exactly what it is.
         Get-ChildItem $stage -Filter '*.pdb' | Remove-Item -Force

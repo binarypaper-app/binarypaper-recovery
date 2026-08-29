@@ -74,7 +74,10 @@ namespace BinaryPaper.Recovery.Cli
         private static int Inspect(string[] args)
         {
             Options options = Options.Parse(args);
-            CollectedInput collected = FrameInput.Collect(options.Inputs, options.ImagePolicy);
+            using var pageProgress = new PageProgressLine();
+            CollectedInput collected = FrameInput.Collect(
+                options.Inputs, options.ImagePolicy, pageProgress.Report);
+            pageProgress.Clear();
             List<(string Source, byte[] Bytes)> frames = collected.Frames;
 
             ReportImages(collected.Images);
@@ -182,7 +185,10 @@ namespace BinaryPaper.Recovery.Cli
                 throw new UsageException("recover requires --output <directory>.");
             }
 
-            CollectedInput collected = FrameInput.Collect(options.Inputs, options.ImagePolicy);
+            using var pageProgress = new PageProgressLine();
+            CollectedInput collected = FrameInput.Collect(
+                options.Inputs, options.ImagePolicy, pageProgress.Report);
+            pageProgress.Clear();
             List<(string Source, byte[] Bytes)> frames = collected.Frames;
 
             ReportImages(collected.Images);
@@ -264,10 +270,61 @@ namespace BinaryPaper.Recovery.Cli
                 }
                 else
                 {
+                    // A truncated page is not a failed page - the codes it did read are usable, and
+                    // the recovery threshold is met across the whole scan. It is worth naming
+                    // because it is the one case where re-shooting the page may add codes.
+                    string cut = image.Truncated ? ", stopped early at its time budget" : string.Empty;
                     Console.Error.WriteLine(
-                        $"  image {image.Source}: {image.Symbols.Count} QR code(s) in {image.Width}x{image.Height}");
+                        $"  image {image.Source}: {image.Symbols.Count} QR code(s) "
+                        + $"in {image.Width}x{image.Height}{cut}");
                 }
             }
+        }
+
+        /// <summary>
+        /// A single rewritten line on stderr saying which page is being worked and how far it has
+        /// got.
+        /// </summary>
+        /// <remarks>
+        /// One page may legitimately take a minute, and a minute of silence is indistinguishable
+        /// from a hang. Live ticks are written only to a terminal: when stderr is redirected they
+        /// would be noise in a log, and the per-page summary already records the outcome.
+        /// </remarks>
+        private sealed class PageProgressLine : IDisposable
+        {
+            private readonly bool _live = !Console.IsErrorRedirected;
+            private bool _dirty;
+
+            public void Report(PageImageProgress progress)
+            {
+                if (!_live)
+                {
+                    return;
+                }
+
+                string line = $"  reading {progress.Source}: {progress.SymbolsFound} code(s), "
+                    + $"{progress.PositionsTried} position(s), {progress.Elapsed.TotalSeconds:F0}s";
+
+                Console.Error.Write(Cr + line.PadRight(LineWidth));
+                _dirty = true;
+            }
+
+            /// <summary>Wipes the live line so a result never lands on top of a progress tick.</summary>
+            public void Clear()
+            {
+                if (_dirty)
+                {
+                    Console.Error.Write(Cr + new string(' ', LineWidth) + Cr);
+                    _dirty = false;
+                }
+            }
+
+            public void Dispose() => Clear();
+
+            private const int LineWidth = 78;
+
+            /// <summary>Carriage return: the line is rewritten in place, not scrolled.</summary>
+            private const string Cr = "\r";
         }
 
         private static int UnknownCommand(string command)
@@ -302,6 +359,9 @@ namespace BinaryPaper.Recovery.Cli
               --json                  machine-readable output on stdout
               --max-output-bytes <n>  cap the decompressed package size
               --max-image-pixels <n>  cap the decoded pixel count per page image
+              --max-image-seconds <n> cap the time spent on one page image (default 120,
+                                      0 disables); an expired page reports the codes it
+                                      had already read
               --allow-high-kdf-cost   accept Argon2id parameters above the stable profile
 
             PASSWORDS
@@ -354,6 +414,7 @@ namespace BinaryPaper.Recovery.Cli
             bool allowHighKdf = false;
             long maxOutput = ResourcePolicy.Default.MaxDecompressedBytes;
             long maxPixels = ImagePolicy.Default.MaxPixels;
+            double maxImageSeconds = ImagePolicy.Default.MaxDuration.TotalSeconds;
 
             for (int i = 1; i < args.Length; i++)
             {
@@ -379,6 +440,23 @@ namespace BinaryPaper.Recovery.Cli
                         if (!long.TryParse(NextValue(args, ref i, "--max-image-pixels"), out maxPixels) || maxPixels <= 0)
                         {
                             throw new UsageException("--max-image-pixels requires a positive integer.");
+                        }
+
+                        break;
+                    case "--max-image-seconds":
+                        // Zero is meaningful here, unlike the other caps: it means "no time
+                        // bound", for someone who would rather grind a page overnight than be
+                        // handed a partial read.
+                        if (!double.TryParse(
+                                NextValue(args, ref i, "--max-image-seconds"),
+                                System.Globalization.NumberStyles.Float,
+                                System.Globalization.CultureInfo.InvariantCulture,
+                                out maxImageSeconds)
+                            || maxImageSeconds < 0
+                            || double.IsNaN(maxImageSeconds))
+                        {
+                            throw new UsageException(
+                                "--max-image-seconds requires a non-negative number (0 disables the bound).");
                         }
 
                         break;
@@ -417,7 +495,11 @@ namespace BinaryPaper.Recovery.Cli
                     MaxDecompressedBytes = maxOutput,
                     AllowHighKdfCost = allowHighKdf
                 },
-                ImagePolicy = new ImagePolicy { MaxPixels = maxPixels }
+                ImagePolicy = new ImagePolicy
+                {
+                    MaxPixels = maxPixels,
+                    MaxDuration = TimeSpan.FromSeconds(maxImageSeconds)
+                }
             };
         }
 
@@ -500,7 +582,8 @@ namespace BinaryPaper.Recovery.Cli
     {
         private static readonly string[] ImageExtensions = [".png", ".jpg", ".jpeg"];
 
-        public static CollectedInput Collect(IReadOnlyList<string> inputs, ImagePolicy policy)
+        public static CollectedInput Collect(
+            IReadOnlyList<string> inputs, ImagePolicy policy, Action<PageImageProgress>? progress = null)
         {
             var files = new List<string>();
 
@@ -527,7 +610,7 @@ namespace BinaryPaper.Recovery.Cli
             var frames = new List<(string, byte[])>();
             var images = new List<PageImageResult>();
             var seenPaths = new HashSet<string>(StringComparer.Ordinal);
-            var reader = new PageImageReader(policy);
+            var reader = new PageImageReader(policy, progress);
 
             foreach (string file in files)
             {

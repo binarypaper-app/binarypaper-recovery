@@ -1,0 +1,72 @@
+{
+  "$comment": [
+    "Every third-party component a release archive actually contains.",
+    "",
+    "One list, read by three tools: tools/write-sbom.ps1 builds the SPDX document from it,",
+    "tools/write-third-party-notices.ps1 assembles THIRD-PARTY-NOTICES from it, and",
+    "tools/publication-audit.ps1 checks that each entry still has its notice text. A component",
+    "added to the build and not added here fails the audit rather than shipping unattributed.",
+    "",
+    "Where a package ships no licence file of its own, the notice under third-party/notices holds",
+    "the canonical text for its declared SPDX identifier, with the copyright line taken from the",
+    "package's own metadata. The authoritative text is always the upstream project's."
+  ],
+  "packages": [
+    {
+      "name": "BouncyCastle.Cryptography",
+      "version": "2.6.2",
+      "licence": "MIT",
+      "purpose": "Argon2id key derivation",
+      "url": "https://www.nuget.org/packages/BouncyCastle.Cryptography/2.6.2",
+      "notice": "BouncyCastle.Cryptography.txt",
+      "noticeSource": "verbatim from the package's own LICENSE.md"
+    },
+    {
+      "name": "SharpCompress",
+      "version": "0.49.1",
+      "licence": "MIT",
+      "purpose": "LZMA decoding (decode only)",
+      "url": "https://www.nuget.org/packages/SharpCompress/0.49.1",
+      "notice": "SharpCompress.txt",
+      "noticeSource": "MIT text with the copyright line from package metadata; the package ships no licence file"
+    },
+    {
+      "name": "StbImageSharp",
+      "version": "2.30.16",
+      "licence": "Unlicense OR MIT",
+      "purpose": "PNG and JPEG decoding",
+      "url": "https://www.nuget.org/packages/StbImageSharp/2.30.16",
+      "notice": "StbImageSharp.txt",
+      "noticeSource": "Unlicense text; the package ships no licence file and declares a dual licence"
+    },
+    {
+      "name": "ZXingCpp",
+      "version": "0.5.3",
+      "licence": "Apache-2.0",
+      "purpose": "QR detection and decoding; ships native assets for six runtime identifiers",
+      "url": "https://www.nuget.org/packages/ZXingCpp/0.5.3",
+      "notice": "ZXingCpp.txt",
+      "noticeSource": "attribution pointing at the Apache-2.0 text shipped as LICENSE"
+    }
+  ],
+  "vendored": [
+    {
+      "name": "erasure16",
+      "version": "0.1.0",
+      "licence": "Apache-2.0",
+      "purpose": "systematic Cauchy Reed-Solomon over GF(2^16), vendored as source",
+      "url": "https://binarypaper.app/",
+      "notice": null,
+      "noticeSource": "carries its upstream NOTICE beside the source, staged as NOTICE.codecs"
+    },
+    {
+      "name": "ldpc-staircase",
+      "version": "0.1.0",
+      "licence": "Apache-2.0",
+      "purpose": "systematic LDPC-Staircase over GF(2), vendored as source; implements the RFC 5170 profile",
+      "url": "https://binarypaper.app/",
+      "notice": null,
+      "noticeSource": "carries its upstream NOTICE beside the source, staged as NOTICE.codecs"
+    }
+  ]
+}

@@ -25,11 +25,33 @@ namespace BinaryPaper.Recovery.FuzzTests;
 /// </remarks>
 public sealed class FuzzTests(ITestOutputHelper output)
 {
-    private const int Iterations = 3000;
+    /// <summary>
+    /// Mutations per target. Override with <c>BP_FUZZ_ITERATIONS</c>.
+    /// </summary>
+    /// <remarks>
+    /// The full run costs minutes per platform, which is the right price nightly and the wrong one
+    /// on every pull request. The seed is fixed either way, so a short run is a prefix of the long
+    /// one and never explores inputs the long run would not.
+    /// </remarks>
+    private static readonly int Iterations =
+        int.TryParse(Environment.GetEnvironmentVariable("BP_FUZZ_ITERATIONS"), out int configured)
+        && configured > 0
+            ? configured
+            : 3000;
+
     private const int Seed = 20260824;
 
-    /// <summary>Per-input budget. Generous, so only a genuine hang trips it.</summary>
-    private static readonly TimeSpan Budget = TimeSpan.FromSeconds(5);
+    /// <summary>
+    /// Per-input budget, scoped to this corpus rather than to the product.
+    /// </summary>
+    /// <remarks>
+    /// These fixtures are around a megapixel, where the slowest input observed takes about nine
+    /// seconds; thirty leaves room for a slow machine while still catching a genuine hang, which is
+    /// minutes. It is deliberately <b>not</b> the reader's own page budget: a real page image may
+    /// legitimately cost far more than any input here, and a test budget set below the cost of
+    /// legitimate work fails on the very thing the tool exists to do.
+    /// </remarks>
+    private static readonly TimeSpan Budget = TimeSpan.FromSeconds(30);
 
     private static string VectorsRoot =>
         Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "..", "vectors"));
@@ -81,7 +103,10 @@ public sealed class FuzzTests(ITestOutputHelper output)
         byte[][] corpus = [.. LoadCorpus("*.png"), .. LoadCorpus("*.jpg")];
         Assert.NotEmpty(corpus);
 
-        var reader = new PageImageReader();
+        // Configured below the harness budget on purpose, so this target tests something stronger
+        // than "did not hang": the reader must honour the bound it was given, with ten seconds of
+        // slack for a loaded machine before the harness calls it a runaway.
+        var reader = new PageImageReader(new ImagePolicy { MaxDuration = Budget - TimeSpan.FromSeconds(10) });
 
         // The image reader is contractually total: it reports failures on the result rather than
         // throwing, so that one bad page never discards frames recovered from other pages. The

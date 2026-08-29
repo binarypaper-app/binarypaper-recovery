@@ -43,13 +43,22 @@ read PDFs, does not drive a live camera, and does not create backups. See
 ## Layout
 
 ```text
-protocol/1.0/      the normative specification for capsule wire version 1.0
+protocol/1.0/         the normative specification for capsule wire version 1.0
 protocol/registries/  stable algorithm and recovery-profile identifiers
-vectors/           conformance vectors with a machine-readable manifest per case
-cli/               the reference recovery implementation (.NET)
-benchmarks/        resource-measurement corpus and results
-release/           release manifest schema
+vectors/              conformance vectors with a machine-readable manifest per case
+cli/                  the reference recovery implementation (.NET)
+benchmarks/           resource-measurement corpus and results
+third-party/          licence texts for everything a release archive contains
+tools/                release, audit, integrity and offline-drill scripts
 ```
+
+## Platforms
+
+Prebuilt archives are published for **win-x64, win-arm64, linux-x64, linux-arm64,
+osx-x64 and osx-arm64**. The QR decoder ships native assets, so those six are the
+platforms the kit builds for; anywhere else you can build the decoder yourself, or work
+from the specification. Every archive is one self-contained executable — no .NET
+installation required.
 
 ## Scope
 

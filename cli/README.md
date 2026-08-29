@@ -52,6 +52,32 @@ for a recovery tool.
 
 **PDF is deliberately out of scope** — see the [repository README](../README.md#scope).
 
+### Resource bounds on page images
+
+Every image is untrusted input, so three limits bound the work one page may cause:
+
+| Limit | Default | Flag |
+| --- | --- | --- |
+| Encoded file size | 128 MB | — |
+| Decoded pixels | 200 million (≈1200 dpi A4, with headroom) | `--max-image-pixels` |
+| Time spent on one page | 120 seconds | `--max-image-seconds` |
+
+The time bound is the one that needs explaining. Reading a photographed page means
+rectifying each located symbol and retrying it across sampling densities, blur levels and
+thresholds, stopping at the first clean decode — so the pipeline costs least on pages it
+can read and most on pages it cannot. A photograph of something that is not a backup page
+is therefore the expensive input, not a rare crafted one, and neither the byte cap nor the
+pixel cap bounds it: the most expensive legitimate page we measured is a 1.4 MB file.
+
+For scale, every page size the kit accepts reads out in **5 to 20 seconds** on ordinary
+hardware, so the default leaves generous room. When the bound is reached, the page reports
+the codes it had already decoded and says it stopped early — those codes are real, and a
+capsule's recovery threshold is met across the whole scan rather than per page. Pass
+`--max-image-seconds 0` to disable the bound entirely.
+
+While a page is being worked, progress is written to stderr, so a slow page is visibly
+alive rather than indistinguishable from a hang.
+
 ### Passwords
 
 Read from a hidden interactive prompt, or from standard input with `--password-stdin`.

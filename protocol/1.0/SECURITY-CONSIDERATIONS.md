@@ -103,10 +103,47 @@ A reader that accepts images MUST:
 - determine file type by **content**, not by file extension;
 - reject dimensions or total pixel counts above a documented default **before** full
   decode;
+- bound the **time** spent decoding one image, with a documented default;
 - process a directory of images incrementally rather than loading all of them; and
 - release decoded pixel buffers promptly.
 
 A per-image decode failure MUST NOT discard frames already recovered from other images.
+
+#### Why time, and not only size
+
+Byte and pixel caps bound how much data a reader accepts. They do not bound how much
+work it does with it, and for image decoding the two come apart sharply.
+
+Detection cost grows faster than linearly in pixels, because the number of candidate
+symbol positions grows with area. Any reader that retries a candidate — at several
+sampling densities, blur levels, or thresholds — multiplies that cost, and it does so
+**most** on images where nothing decodes, because a retry ladder that stops at the first
+success pays its full price only where there is no success to be had. The expensive input
+is therefore an ordinary photograph of something that is not a page, not a rare crafted
+one.
+
+Nor does the encoded size predict the work: page images are mostly white and compress
+accordingly, so a file of a few megabytes can legitimately expand into the largest and
+most expensive image a reader accepts.
+
+A reader MAY choose any default it can justify for its platform — a phone and an
+overnight forensic run are not the same problem — and MAY allow the bound to be disabled
+by explicit configuration. What it MUST NOT do is spend unbounded time on one image.
+
+#### Stopping early
+
+When the bound is reached, a reader MUST return the QR payloads it has already decoded
+and MUST report that the image was not fully processed. It MUST NOT present a
+partially-processed image as a fully-read one.
+
+This is not in tension with the "no partial success" rule in the capsule pipeline. Each
+payload returned is a complete QR symbol, and every one of them is still validated as a
+frame — structure, field rules, and CRC-32C — before it can influence a session. An image
+yielding fewer frames than it contains is the ordinary case the erasure layer exists for,
+and the recovery threshold is evaluated across the whole scan rather than per image.
+
+A reader SHOULD report progress while working an image. A bound the user cannot
+distinguish from a hang does not help the user.
 
 ## 4. Authentication is the boundary
 

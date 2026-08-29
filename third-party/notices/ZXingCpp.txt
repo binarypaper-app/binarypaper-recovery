@@ -1,0 +1,11 @@
+ZXingCpp is the .NET binding for the zxing-cpp project, by Axel Waggershauser and the
+zxing-cpp contributors. It is licensed under the Apache License, Version 2.0, and its
+native assets are redistributed in this kit's platform archives.
+
+The full text of the Apache License, Version 2.0 is included with this release as
+LICENSE, and is also available at:
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Upstream project: https://github.com/zxing-cpp/zxing-cpp
+Package:          https://www.nuget.org/packages/ZXingCpp/0.5.3

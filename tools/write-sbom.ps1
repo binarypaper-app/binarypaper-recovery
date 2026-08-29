@@ -23,31 +23,15 @@ $ErrorActionPreference = 'Stop'
 $created = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
 $namespace = "https://binarypaper.app/spdx/binarypaper-recovery-$Version-$([guid]::NewGuid())"
 
-# Kept in step with cli/src/BinaryPaper.Recovery/BinaryPaper.Recovery.csproj. A mismatch here is a
-# defect: an SBOM that disagrees with the build is worse than none, because it is believed.
-$packages = @(
-    @{ name = 'BouncyCastle.Cryptography'; version = '2.6.2'; licence = 'MIT'
-       purpose = 'Argon2id key derivation'
-       url = 'https://www.nuget.org/packages/BouncyCastle.Cryptography/2.6.2' }
-    @{ name = 'SharpCompress'; version = '0.49.1'; licence = 'MIT'
-       purpose = 'LZMA decoding (decode only)'
-       url = 'https://www.nuget.org/packages/SharpCompress/0.49.1' }
-    @{ name = 'StbImageSharp'; version = '2.30.16'; licence = 'Unlicense OR MIT'
-       purpose = 'PNG and JPEG decoding'
-       url = 'https://www.nuget.org/packages/StbImageSharp/2.30.16' }
-    @{ name = 'ZXingCpp'; version = '0.5.3'; licence = 'Apache-2.0'
-       purpose = 'QR detection and decoding; ships native assets for six runtime identifiers'
-       url = 'https://www.nuget.org/packages/ZXingCpp/0.5.3' }
-)
+# The component list lives in third-party/components.json, which is also what
+# write-third-party-notices.ps1 assembles the archive's notices from and what publication-audit.ps1
+# checks. One list: an SBOM that disagreed with the notices would be worse than either alone,
+# because both are believed.
+$components = Get-Content -LiteralPath (Join-Path (Split-Path -Parent $PSScriptRoot) 'third-party/components.json') -Raw |
+    ConvertFrom-Json
 
-$vendored = @(
-    @{ name = 'erasure16'; version = '0.1.0'; licence = 'Apache-2.0'
-       purpose = 'systematic Cauchy Reed-Solomon over GF(2^16), vendored as source'
-       url = 'https://binarypaper.app/' }
-    @{ name = 'ldpc-staircase'; version = '0.1.0'; licence = 'Apache-2.0'
-       purpose = 'systematic LDPC-Staircase over GF(2), vendored as source; implements the RFC 5170 profile'
-       url = 'https://binarypaper.app/' }
-)
+$packages = $components.packages
+$vendored = $components.vendored
 
 $builder = [System.Text.StringBuilder]::new()
 [void]$builder.AppendLine('{')

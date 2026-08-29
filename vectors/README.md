@@ -113,12 +113,33 @@ Running them the other way round drops the image entries from the aggregate mani
 
 ## Coverage
 
-Frame structure and field rules, the CRC-32C check, session identity and duplicate
-handling, insufficient-frame recovery, preamble structure and algorithm-combination rules,
-body bounds, KDF parameter validation, both authentication modes, full recovery for
-stored, LZMA, plaintext, encrypted, Reed–Solomon and LDPC capsules, and PNG/JPEG image
-decoding including a rotated page, a multi-code page, and a binary payload.
+54 vectors: **7 positive**, **40 negative**, **5 image** and **2 image-negative**.
 
-Still to come before the first release: LZMA and ZIP package negatives, profile and
-resource refusals, and image negatives (unreadable code alongside recoverable repair
-symbols, mixed capsules across images).
+| Family | Count | What it pins |
+| --- | --- | --- |
+| positive | 7 | Full recovery for stored, LZMA, plaintext, encrypted, Reed–Solomon and LDPC capsules |
+| `frame-*` | 16 | Frame structure, field rules, and the CRC-32C check |
+| `package-*` | 10 | ZIP structure, manifest rules, entry paths, and the stored-only method |
+| `preamble-*` | 5 | Preamble structure, algorithm combinations, body bounds, KDF parameters |
+| `auth-*` | 3 | Both authentication modes, and a wrong password |
+| `session-*` | 2 | Session identity and duplicate handling |
+| `compression-*` | 2 | Malformed compressed input |
+| `profile-*`, `resource-*`, `recovery-*` | 3 | Profile refusal, resource refusal, insufficient frames |
+| image | 5 | PNG and JPEG decoding: a single page, a rotated page, a multi-code page, a binary payload |
+| image-negative | 2 | An unreadable code beside recoverable repair symbols; mixed capsules across images |
+
+Every rejection stage the specification defines has at least one vector. Coverage is not
+the same as completeness — a negative vector for a rule nobody has thought to break yet is
+still worth adding, and new families are welcome.
+
+### What the suite deliberately does not pin
+
+**Timing.** No vector asserts how long anything takes. A conformance suite that failed on
+a slow machine would teach everyone to ignore it. Resource *limits* are pinned as
+behaviour — `resource-declared-output-too-large` requires a refusal — but durations are
+measured in the benchmarks, not asserted here.
+
+**Image-detection yield.** An image vector pins the frame bytes a decoder must produce
+once it has decoded a symbol, not how many symbols a given detector finds in a
+photograph. Two conforming readers may legitimately differ on what they can see; they may
+not differ on what the bytes mean.

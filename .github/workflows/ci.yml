@@ -4,29 +4,60 @@ name: CI
 # contract cannot land quietly: the conformance suite is the contract, and it runs on three
 # platforms because a recovery tool that only works where its authors develop is not much of a
 # promise.
+#
+# Three platforms is also the expensive part, so it runs where it earns its keep. A pull request
+# gets Linux and a short fuzz pass; `main` gets the full matrix; the full fuzz corpus runs nightly,
+# where minutes are cheap and nobody is waiting.
 
 on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    # Nightly, for the long fuzz run.
+    - cron: '17 3 * * *'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
+  # Which platforms this run covers. A pull request is a fast signal; `main` and the nightly run
+  # are the thorough ones.
+  scope:
+    name: scope
+    runs-on: ubuntu-latest
+    outputs:
+      platforms: ${{ steps.pick.outputs.platforms }}
+      fuzz-iterations: ${{ steps.pick.outputs.fuzz-iterations }}
+    steps:
+      - id: pick
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo 'platforms=["ubuntu-latest"]' >> "$GITHUB_OUTPUT"
+            echo 'fuzz-iterations=200' >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "schedule" ]; then
+            echo 'platforms=["ubuntu-latest","windows-latest","macos-latest"]' >> "$GITHUB_OUTPUT"
+            echo 'fuzz-iterations=3000' >> "$GITHUB_OUTPUT"
+          else
+            echo 'platforms=["ubuntu-latest","windows-latest","macos-latest"]' >> "$GITHUB_OUTPUT"
+            echo 'fuzz-iterations=600' >> "$GITHUB_OUTPUT"
+          fi
+
   test:
     name: test (${{ matrix.os }})
+    needs: scope
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: ${{ fromJSON(needs.scope.outputs.platforms) }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
 
@@ -34,6 +65,10 @@ jobs:
         run: dotnet build cli/BinaryPaper.Recovery.slnx -c Release
 
       - name: Unit and fuzz tests
+        env:
+          # The seed is fixed, so a short run is a prefix of the long one: it explores nothing the
+          # nightly run would not.
+          BP_FUZZ_ITERATIONS: ${{ needs.scope.outputs.fuzz-iterations }}
         run: dotnet test cli/BinaryPaper.Recovery.slnx -c Release --no-build
 
       - name: Conformance suite
@@ -47,23 +82,41 @@ jobs:
     name: publication audit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # The audit scans history, not just the tip. A shallow clone would let a finding hide.
           fetch-depth: 0
 
+      # The private-reference pattern list cannot live in this repository - publishing the names of
+      # private repositories is the very thing being audited for - so it arrives as a secret.
+      #
+      # A pull request from a fork receives no secrets by design. Rather than putting a permanent
+      # red mark on every outside contribution, such a run does the rest of the audit and says
+      # plainly that it cannot clear the repository for publication. The run that authorises a
+      # release is the one on a tag, which does have the secret and does require it.
       - name: Publication audit
         shell: pwsh
-        run: ./tools/publication-audit.ps1
+        env:
+          BP_PRIVATE_REFERENCE_PATTERNS: ${{ secrets.PRIVATE_REFERENCE_PATTERNS }}
+        run: |
+          $forkPr = '${{ github.event_name }}' -eq 'pull_request' -and
+            '${{ github.event.pull_request.head.repo.full_name }}' -ne '${{ github.repository }}'
+
+          if ($forkPr) {
+            ./tools/publication-audit.ps1 -AllowMissingPatterns
+          }
+          else {
+            ./tools/publication-audit.ps1
+          }
 
   drill:
     name: offline recovery drill
     runs-on: ubuntu-latest
     needs: test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
 

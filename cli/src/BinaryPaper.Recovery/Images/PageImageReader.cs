@@ -1,6 +1,7 @@
 // Copyright 2026 BinaryPaper
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using StbImageSharp;
 using ZXingCpp;
 
@@ -13,7 +14,33 @@ public sealed record PageImageResult(
     int Width,
     int Height,
     IReadOnlyList<DecodedSymbol> Symbols,
-    string? Failure);
+    string? Failure)
+{
+    /// <summary>
+    /// The page's time budget expired before the pipeline finished, so <see cref="Symbols"/> is
+    /// what had been decoded by then rather than everything the page holds.
+    /// </summary>
+    /// <remarks>
+    /// Not a failure. Every symbol reported is a complete QR payload and is still validated as a
+    /// frame before it can influence a session, and the recovery threshold is evaluated across the
+    /// whole scan rather than per page. It is surfaced so a caller can say so, because a page that
+    /// was cut short is worth re-shooting and a page that was read out is not.
+    /// </remarks>
+    public bool Truncated { get; init; }
+}
+
+/// <summary>
+/// Progress on one page, reported while it is being worked.
+/// </summary>
+/// <remarks>
+/// A bounded wait that looks exactly like a hang is still a tool the user kills. One page can
+/// legitimately take a minute, so the reader says what it is doing rather than going silent.
+/// </remarks>
+public sealed record PageImageProgress(
+    string Source,
+    int SymbolsFound,
+    int PositionsTried,
+    TimeSpan Elapsed);
 
 /// <summary>
 /// Turns page images into frame bytes: PNG/JPEG in, QR payloads out.
@@ -37,9 +64,12 @@ public sealed record PageImageResult(
 /// Measured on twelve photographs of a 48-code page, one whole-page pass found 20 frames and the
 /// full pipeline found 45.</para>
 /// </remarks>
-public sealed class PageImageReader(ImagePolicy? policy = null)
+public sealed class PageImageReader(ImagePolicy? policy = null, Action<PageImageProgress>? progress = null)
 {
     private readonly ImagePolicy _policy = policy ?? ImagePolicy.Default;
+
+    /// <summary>How often progress is reported. Often enough to look alive, rarely enough to read.</summary>
+    private static readonly TimeSpan ProgressInterval = TimeSpan.FromSeconds(1);
 
     /// <summary>File signatures, so type comes from content and not from a name anyone can choose.</summary>
     private static readonly byte[] PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
@@ -100,9 +130,21 @@ public sealed class PageImageReader(ImagePolicy? policy = null)
 
         try
         {
-            List<DecodedSymbol> symbols = DecodeSymbols(source, image.Data, image.Width, image.Height);
-            return new PageImageResult(source, image.Width, image.Height, symbols,
-                symbols.Count == 0 ? "no QR codes found" : null);
+            List<DecodedSymbol> symbols = DecodeSymbols(
+                source, image.Data, image.Width, image.Height, out bool truncated);
+
+            string? failure = (symbols.Count, truncated) switch
+            {
+                (0, true) => $"no QR codes found before the {_policy.MaxDuration.TotalSeconds:F0}s "
+                    + "budget for this page expired",
+                (0, false) => "no QR codes found",
+                _ => null,
+            };
+
+            return new PageImageResult(source, image.Width, image.Height, symbols, failure)
+            {
+                Truncated = truncated,
+            };
         }
         catch (Exception ex)
         {
@@ -135,10 +177,40 @@ public sealed class PageImageReader(ImagePolicy? policy = null)
     /// <summary>How far the neighbour prediction is allowed to walk out from a decoded symbol.</summary>
     private const int LatticePasses = 4;
 
-    private List<DecodedSymbol> DecodeSymbols(string source, byte[] grey, int width, int height)
+    private List<DecodedSymbol> DecodeSymbols(
+        string source, byte[] grey, int width, int height, out bool truncated)
     {
+        truncated = false;
         var symbols = new List<DecodedSymbol>();
         var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        // The budget is wall-clock rather than a work count on purpose. The same 400 rectify
+        // attempts cost about a second on a page that reads and twenty-odd minutes on one that
+        // does not, because the ladder stops at the first clean decode and so pays its full price
+        // only where there is nothing to find. Time is the unit that tracks what the user waits
+        // for; bytes and pixels bound the other dimensions.
+        var clock = Stopwatch.StartNew();
+        TimeSpan budget = _policy.MaxDuration;
+        var lastReport = TimeSpan.Zero;
+        int positionsTried = 0;
+
+        bool Expired() => budget > TimeSpan.Zero && clock.Elapsed >= budget;
+
+        bool reportedOnce = false;
+
+        void Report()
+        {
+            // The first report always goes out, however fast the page is: naming the page being
+            // worked the moment work starts is most of the value. After that it is throttled.
+            if (progress is null || (reportedOnce && clock.Elapsed - lastReport < ProgressInterval))
+            {
+                return;
+            }
+
+            reportedOnce = true;
+            lastReport = clock.Elapsed;
+            progress(new PageImageProgress(source, symbols.Count, positionsTried, clock.Elapsed));
+        }
 
         void Accept(Barcode barcode)
         {
@@ -185,6 +257,16 @@ public sealed class PageImageReader(ImagePolicy? policy = null)
                         cells.Add(quad);
                     }
                 }
+
+                Report();
+
+                // A full-page read at the pixel cap is minutes on its own, so the budget has to be
+                // checked between passes here and not only in stage 2.
+                if (Expired())
+                {
+                    truncated = true;
+                    return symbols;
+                }
             }
         }
 
@@ -207,6 +289,13 @@ public sealed class PageImageReader(ImagePolicy? policy = null)
                 if (attempted.Count >= _policy.MaxSymbolAttempts)
                 {
                     // A crafted image can otherwise multiply predicted cells without bound.
+                    truncated = true;
+                    return symbols;
+                }
+
+                if (Expired())
+                {
+                    truncated = true;
                     return symbols;
                 }
 
@@ -216,6 +305,8 @@ public sealed class PageImageReader(ImagePolicy? policy = null)
                 }
 
                 attempted.Add(cell);
+                positionsTried++;
+                Report();
 
                 if (!TryDecodeCell(grey, width, height, cell, Accept))
                 {
@@ -623,6 +714,23 @@ public sealed record ImagePolicy
     /// full-size backup holds a few dozen symbols, so this leaves generous headroom.
     /// </remarks>
     public int MaxSymbolAttempts { get; init; } = 400;
+
+    /// <summary>
+    /// How long one page image may be worked before the reader returns what it has.
+    /// </summary>
+    /// <remarks>
+    /// <para>The pixel cap bounds decoding and <see cref="MaxSymbolAttempts"/> bounds detection,
+    /// but neither bounds their product, which is what a user actually waits for. The rectify
+    /// ladder stops at the first clean decode, so it costs least on pages that read and most on
+    /// pages that do not — a photograph of something that is not a backup page at all is the
+    /// expensive case, not the rare one.</para>
+    ///
+    /// <para>Two minutes is six times the slowest legitimate page measured at the pixel cap
+    /// (a 1200 dpi A4 scan reads out in about twenty seconds), which leaves room for hardware
+    /// several times slower than a development machine while cutting the pathological case from
+    /// tens of minutes to two. <see cref="TimeSpan.Zero"/> disables the bound.</para>
+    /// </remarks>
+    public TimeSpan MaxDuration { get; init; } = TimeSpan.FromSeconds(120);
 
     public static ImagePolicy Default { get; } = new();
 }
