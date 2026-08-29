@@ -98,22 +98,62 @@ public sealed class PageImageReader(ImagePolicy? policy = null, Action<PageImage
             return new PageImageResult(source, 0, 0, [], "not a PNG or JPEG (checked by content, not by file name)");
         }
 
-        ImageResult image;
+        if (bytes.LongLength > _policy.MaxEncodedBytes)
+        {
+            return new PageImageResult(source, 0, 0, [],
+                $"image is {bytes.LongLength} bytes, above the {_policy.MaxEncodedBytes}-byte limit");
+        }
+
+        // The pixel cap is enforced from the header, before any pixel buffer exists.
+        //
+        // Encoded size does not predict decoded size and the gap is not marginal: a page image is
+        // mostly white and compresses accordingly, so a 439 KB file can legitimately declare 400
+        // megapixels. Decoding first and checking afterwards means the allocation the cap exists to
+        // prevent has already happened by the time the cap refuses it - measured at 785 MB of
+        // working set for that 439 KB file, from an input the reader then correctly rejected.
+        ImageInfo? info;
         try
         {
-            // Dimensions are validated below, but the decoder allocates first, so the byte budget is
-            // the bound that actually protects us here.
-            if (bytes.LongLength > _policy.MaxEncodedBytes)
-            {
-                return new PageImageResult(source, 0, 0, [],
-                    $"image is {bytes.LongLength} bytes, above the {_policy.MaxEncodedBytes}-byte limit");
-            }
-
-            image = ImageResult.FromMemory(bytes, ColorComponents.Grey);
+            info = ImageInfo.FromStream(new MemoryStream(bytes, writable: false));
         }
         catch (Exception ex)
         {
             return new PageImageResult(source, 0, 0, [], $"could not be decoded: {ex.Message}");
+        }
+
+        if (info is null)
+        {
+            return new PageImageResult(source, 0, 0, [], "could not be decoded: no readable image header");
+        }
+
+        int declaredWidth = info.Value.Width;
+        int declaredHeight = info.Value.Height;
+
+        if (declaredWidth <= 0 || declaredHeight <= 0)
+        {
+            return new PageImageResult(source, declaredWidth, declaredHeight, [], "image has no pixels");
+        }
+
+        long pixels = (long)declaredWidth * declaredHeight;
+        if (pixels > _policy.MaxPixels)
+        {
+            return new PageImageResult(source, declaredWidth, declaredHeight, [],
+                $"image is {declaredWidth}x{declaredHeight} ({pixels} pixels), above the {_policy.MaxPixels}-pixel limit");
+        }
+
+        // Decoding is inside the budget too. It is bounded work, but on a large page it is seconds
+        // of it, and a bound that starts after the expensive part is not the bound it claims to be.
+        var clock = Stopwatch.StartNew();
+
+        ImageResult image;
+        try
+        {
+            image = ImageResult.FromMemory(bytes, ColorComponents.Grey);
+        }
+        catch (Exception ex)
+        {
+            return new PageImageResult(source, declaredWidth, declaredHeight, [],
+                $"could not be decoded: {ex.Message}");
         }
 
         if (image.Width <= 0 || image.Height <= 0)
@@ -121,17 +161,10 @@ public sealed class PageImageReader(ImagePolicy? policy = null, Action<PageImage
             return new PageImageResult(source, image.Width, image.Height, [], "image has no pixels");
         }
 
-        long pixels = (long)image.Width * image.Height;
-        if (pixels > _policy.MaxPixels)
-        {
-            return new PageImageResult(source, image.Width, image.Height, [],
-                $"image is {image.Width}x{image.Height} ({pixels} pixels), above the {_policy.MaxPixels}-pixel limit");
-        }
-
         try
         {
             List<DecodedSymbol> symbols = DecodeSymbols(
-                source, image.Data, image.Width, image.Height, out bool truncated);
+                source, image.Data, image.Width, image.Height, clock, out bool truncated);
 
             string? failure = (symbols.Count, truncated) switch
             {
@@ -178,7 +211,7 @@ public sealed class PageImageReader(ImagePolicy? policy = null, Action<PageImage
     private const int LatticePasses = 4;
 
     private List<DecodedSymbol> DecodeSymbols(
-        string source, byte[] grey, int width, int height, out bool truncated)
+        string source, byte[] grey, int width, int height, Stopwatch clock, out bool truncated)
     {
         truncated = false;
         var symbols = new List<DecodedSymbol>();
@@ -189,7 +222,9 @@ public sealed class PageImageReader(ImagePolicy? policy = null, Action<PageImage
         // does not, because the ladder stops at the first clean decode and so pays its full price
         // only where there is nothing to find. Time is the unit that tracks what the user waits
         // for; bytes and pixels bound the other dimensions.
-        var clock = Stopwatch.StartNew();
+        //
+        // The clock is started by the caller, before the image is decoded, so decoding is inside
+        // the budget rather than free.
         TimeSpan budget = _policy.MaxDuration;
         var lastReport = TimeSpan.Zero;
         int positionsTried = 0;

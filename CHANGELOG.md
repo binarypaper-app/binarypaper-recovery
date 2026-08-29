@@ -44,6 +44,10 @@ version 1.0** (`format_major = 1`, `format_minor = 0`).
   1.4 MB file. When the bound is reached, the page reports the codes it had already
   decoded and says it stopped early.
 - **Progress reporting while a page is worked**, so a slow page is visibly alive.
+- An image above the pixel cap is now refused **from its header**, without being decoded, as the
+  specification requires. Encoded size does not predict decoded size — a 439 KB file can declare
+  400 megapixels — so deciding after the decode meant the allocation the cap exists to prevent had
+  already happened. Decoding is also inside the per-page time budget now, rather than before it.
 - `THIRD-PARTY-NOTICES` in every release archive, assembled from `third-party/` and from
   the .NET runtime pack the archive was published against. The archives are a single
   self-contained binary, so the terms of everything inside it travel with it.

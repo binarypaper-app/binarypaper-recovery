@@ -64,12 +64,27 @@ jobs:
       - name: Build
         run: dotnet build cli/BinaryPaper.Recovery.slnx -c Release
 
+      # --blame-crash: a fuzz target that takes the test host down otherwise reports only "Test
+      # host process crashed", which names neither the test nor the input. With it, the run leaves
+      # a sequence file naming the test that was executing and a dump beside it.
       - name: Unit and fuzz tests
         env:
           # The seed is fixed, so a short run is a prefix of the long one: it explores nothing the
           # nightly run would not.
           BP_FUZZ_ITERATIONS: ${{ needs.scope.outputs.fuzz-iterations }}
-        run: dotnet test cli/BinaryPaper.Recovery.slnx -c Release --no-build
+        run: >
+          dotnet test cli/BinaryPaper.Recovery.slnx -c Release --no-build
+          --blame-crash
+          --results-directory artifacts/test-results
+
+      - name: Keep the crash evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}
+          path: artifacts/test-results
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Conformance suite
         run: dotnet run --project cli/src/BinaryPaper.Recovery.Cli -c Release --no-build -- verify-vectors vectors
