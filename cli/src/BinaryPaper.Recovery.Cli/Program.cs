@@ -33,6 +33,11 @@ namespace BinaryPaper.Recovery.Cli
                 return args.Length == 0 ? ExitCodes.UsageError : ExitCodes.Success;
             }
 
+            if (args[0] is PageWorker.Command)
+            {
+                return PageWorker.RunChild(args);
+            }
+
             if (args[0] is "--version")
             {
                 Console.WriteLine($"binarypaper {ToolVersion}");
@@ -75,12 +80,13 @@ namespace BinaryPaper.Recovery.Cli
         {
             Options options = Options.Parse(args);
             using var pageProgress = new PageProgressLine();
-            CollectedInput collected = FrameInput.Collect(
-                options.Inputs, options.ImagePolicy, pageProgress.Report);
+            CollectedInput collected = PageReading.ReadAsMuchAsNeeded(
+                options, pageProgress.Report, out FrameIngestResult ingest);
             pageProgress.Clear();
             List<(string Source, byte[] Bytes)> frames = collected.Frames;
 
             ReportImages(collected.Images);
+            ReportUnreadable(collected);
 
             if (frames.Count == 0)
             {
@@ -89,7 +95,6 @@ namespace BinaryPaper.Recovery.Cli
                 return collected.Images.Count > 0 ? ExitCodes.InputDecodeError : ExitCodes.NoFrames;
             }
 
-            FrameIngestResult ingest = CapsuleRecovery.Ingest(frames);
             var summaries = ingest.Sessions
                 .Where(s => s.Reference is not null)
                 .Select(CapsuleRecovery.Summarize)
@@ -186,12 +191,13 @@ namespace BinaryPaper.Recovery.Cli
             }
 
             using var pageProgress = new PageProgressLine();
-            CollectedInput collected = FrameInput.Collect(
-                options.Inputs, options.ImagePolicy, pageProgress.Report);
+            CollectedInput collected = PageReading.ReadAsMuchAsNeeded(
+                options, pageProgress.Report, out FrameIngestResult ingest);
             pageProgress.Clear();
             List<(string Source, byte[] Bytes)> frames = collected.Frames;
 
             ReportImages(collected.Images);
+            ReportUnreadable(collected);
 
             if (frames.Count == 0)
             {
@@ -200,7 +206,6 @@ namespace BinaryPaper.Recovery.Cli
                 return collected.Images.Count > 0 ? ExitCodes.InputDecodeError : ExitCodes.NoFrames;
             }
 
-            FrameIngestResult ingest = CapsuleRecovery.Ingest(frames);
             List<ScanSession> sessions = ingest.Sessions.Where(s => s.Reference is not null).ToList();
 
             if (sessions.Count == 0)
@@ -325,6 +330,23 @@ namespace BinaryPaper.Recovery.Cli
 
             /// <summary>Carriage return: the line is rewritten in place, not scrolled.</summary>
             private const string Cr = "\r";
+        }
+
+        /// <summary>
+        /// Names any page that could not be read even in isolation.
+        /// </summary>
+        /// <remarks>
+        /// Worth saying plainly rather than burying: the page is gone from this run, and if the
+        /// capsule ends up short it is the one to photograph again. Usually it costs nothing — a
+        /// capsule needs only its source count of the codes spread across every page.
+        /// </remarks>
+        private static void ReportUnreadable(CollectedInput collected)
+        {
+            foreach (string source in collected.Unreadable)
+            {
+                Console.Error.WriteLine(
+                    $"  image {source}: could not be read — the decoder failed on it twice, so it was skipped");
+            }
         }
 
         private static int UnknownCommand(string command)
@@ -565,10 +587,66 @@ namespace BinaryPaper.Recovery.Cli
         }
     }
 
+    /// <summary>
+    /// Reads the inputs, and escalates to the expensive pass only if the cheap one fell short.
+    /// </summary>
+    /// <remarks>
+    /// The image layer cannot judge "enough" — only the capsule knows how many symbols it needs.
+    /// So sufficiency is decided here, after ingest, where the answer is actually available.
+    /// </remarks>
+    internal static class PageReading
+    {
+        public static CollectedInput ReadAsMuchAsNeeded(
+            Options options, Action<PageImageProgress>? progress, out FrameIngestResult ingest)
+        {
+            CollectedInput collected = FrameInput.Collect(options.Inputs, options.ImagePolicy, progress);
+            ingest = CapsuleRecovery.Ingest(collected.Frames);
+
+            if (collected.ImagePaths.Count == 0 || IsEnough(ingest))
+            {
+                return collected;
+            }
+
+            Console.Error.WriteLine(
+                $"  not enough codes yet — taking a closer look at {collected.ImagePaths.Count} page image(s)");
+
+            FrameInput.TakeSecondLook(collected, options.ImagePolicy);
+            ingest = CapsuleRecovery.Ingest(collected.Frames);
+            return collected;
+        }
+
+        /// <summary>
+        /// Whether what has been read is already enough to recover every capsule seen.
+        /// </summary>
+        /// <remarks>
+        /// For LDPC this is a necessary rather than sufficient condition, exactly as it is when
+        /// reported to the user: reaching the source count does not guarantee the decoder
+        /// completes. A capsule that turns out to need more is a reason to scan more pages, and
+        /// re-running takes the closer look.
+        /// </remarks>
+        private static bool IsEnough(FrameIngestResult ingest)
+        {
+            var summaries = ingest.Sessions
+                .Where(s => s.Reference is not null)
+                .Select(CapsuleRecovery.Summarize)
+                .ToList();
+
+            return summaries.Count > 0
+                && summaries.All(s => s.HasEnoughFrames && s.ConflictCount == 0);
+        }
+    }
+
     /// <summary>The frames found in the inputs, plus what happened to each page image.</summary>
     internal sealed record CollectedInput(
         List<(string Source, byte[] Bytes)> Frames,
-        List<PageImageResult> Images);
+        List<PageImageResult> Images)
+    {
+        /// <summary>Page image paths, in the order they were read, for a possible second look.</summary>
+        public List<string> ImagePaths { get; } = [];
+
+        /// <summary>Pages a second look could not read at all, because every attempt died.</summary>
+        public List<string> Unreadable { get; } = [];
+    }
 
     /// <summary>
     /// Collects frames from the given paths, in a deterministic order.
@@ -607,10 +685,14 @@ namespace BinaryPaper.Recovery.Cli
             // Ordinal sort so repeated runs and repeated inputs behave identically everywhere.
             files.Sort(StringComparer.Ordinal);
 
-            var frames = new List<(string, byte[])>();
-            var images = new List<PageImageResult>();
+            var collected = new CollectedInput([], []);
+            List<(string, byte[])> frames = collected.Frames;
+            List<PageImageResult> images = collected.Images;
             var seenPaths = new HashSet<string>(StringComparer.Ordinal);
-            var reader = new PageImageReader(policy, progress);
+
+            // The first pass over every page is the cheap one: the whole-page sweep, no
+            // rectification. On the pages this tool is built for it is also the last one.
+            var reader = new PageImageReader(policy with { RectifySymbols = false }, progress);
 
             foreach (string file in files)
             {
@@ -628,6 +710,7 @@ namespace BinaryPaper.Recovery.Cli
                 {
                     PageImageResult result = reader.Read(name, bytes);
                     images.Add(result);
+                    collected.ImagePaths.Add(file);
                     foreach (DecodedSymbol symbol in result.Symbols)
                     {
                         frames.Add(($"{name}#qr", symbol.Payload));
@@ -639,7 +722,46 @@ namespace BinaryPaper.Recovery.Cli
                 frames.Add((name, bytes));
             }
 
-            return new CollectedInput(frames, images);
+            return collected;
+        }
+
+        /// <summary>
+        /// Takes a second, expensive look at every page image, in a child process per page.
+        /// </summary>
+        /// <remarks>
+        /// <para>Only reached when the cheap pass did not produce enough frames to recover, which
+        /// is the only condition under which rectification has ever been shown to add anything.
+        /// The rectify stage exists to rescue symbols the detector located but could not read, so
+        /// its value tracks how much the detector is struggling — on a corpus where the sweep
+        /// already read the page, it contributed nothing at eight times the cost.</para>
+        ///
+        /// <para>Frames found here are added to the ones already collected. Nothing is discarded:
+        /// a page that read well the first time is simply read again, and duplicate payloads are
+        /// already handled by the session layer.</para>
+        /// </remarks>
+        public static void TakeSecondLook(CollectedInput collected, ImagePolicy policy)
+        {
+            var rectifying = policy with { RectifySymbols = true };
+
+            for (int i = 0; i < collected.ImagePaths.Count; i++)
+            {
+                string path = collected.ImagePaths[i];
+                string name = Path.GetFileName(path);
+
+                PageImageResult? result = PageWorker.Read(path, name, rectifying);
+                if (result is null)
+                {
+                    // Every attempt died. The page is lost; the run is not.
+                    collected.Unreadable.Add(name);
+                    continue;
+                }
+
+                collected.Images[i] = result;
+                foreach (DecodedSymbol symbol in result.Symbols)
+                {
+                    collected.Frames.Add(($"{name}#qr", symbol.Payload));
+                }
+            }
         }
 
         private static bool IsCandidate(string path)

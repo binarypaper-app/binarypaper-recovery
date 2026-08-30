@@ -56,6 +56,32 @@ for a recovery tool.
 
 **PDF is deliberately out of scope** — see the [repository README](../README.md#scope).
 
+### How a page is read
+
+Two passes, and most runs only need the first.
+
+**The sweep.** Every page image is read whole, at two levels of softening and two ways of deciding
+black from white. On a scan, and on most photographs, this reads the page and the run ends here.
+
+**The closer look.** If the codes collected still are not enough to recover the capsule, every page
+is read again — this time locating each candidate symbol, straightening it as though seen head-on,
+retrying it across sampling densities and softening levels, and using symbols that decode to
+predict where their neighbours must be. That last part recovers symbols whose own corner markers
+were never found, which is what a photograph taken at an angle tends to lose.
+
+The split matters because the second pass is roughly eight times the cost of the first and earns
+nothing when the first already read the page. It rescues symbols the detector located but could not
+read, so its value tracks how much the detector is struggling rather than how hard the page looks.
+
+**The closer look runs one page at a time, each in its own short-lived child process.** QR payloads
+are turned into bytes by a native decoder, and a native decoder handed a damaged image can corrupt
+its own memory; when that happens the process is killed outright, with no error to catch. Reading
+each page in isolation means such a failure costs that page rather than every page already read. A
+page whose child dies is retried once in a fresh process — the failure is not deterministic, and a
+new process starts with clean memory — and if it dies again it is reported and skipped so the run
+can finish. Since a capsule needs only its source count of codes spread across all pages, one
+skipped page is usually free.
+
 ### Resource bounds on page images
 
 Every image is untrusted input, so three limits bound the work one page may cause:

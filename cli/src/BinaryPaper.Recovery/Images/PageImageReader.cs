@@ -312,6 +312,11 @@ public sealed class PageImageReader(ImagePolicy? policy = null, Action<PageImage
         // detected — clipped by the frame edge, washed out by glare — can still be lifted out of the
         // page by prediction. That is what carries the yield from a fifth of the page to nearly all
         // of it.
+        if (!_policy.RectifySymbols)
+        {
+            return symbols;
+        }
+
         var work = cells;
         var attempted = new List<Quad>();
 
@@ -766,6 +771,23 @@ public sealed record ImagePolicy
     /// tens of minutes to two. <see cref="TimeSpan.Zero"/> disables the bound.</para>
     /// </remarks>
     public TimeSpan MaxDuration { get; init; } = TimeSpan.FromSeconds(120);
+
+    /// <summary>
+    /// Whether to rectify located symbols and retry them, and to predict their lattice neighbours.
+    /// </summary>
+    /// <remarks>
+    /// <para>This is the expensive half of the pipeline and it is not always worth its price.
+    /// Measured on a corpus of twelve photographs of a 48-symbol page, the whole-page pass alone
+    /// recovered 45 symbols and rectification added none; against a weaker decoder the same stage
+    /// took 6 to 9. It rescues symbols the detector located but could not read, so its value tracks
+    /// how much the detector is struggling, not how hard the page is in general.</para>
+    ///
+    /// <para>Callers therefore run the cheap pass over everything first and turn this on only for
+    /// a second look at pages that did not yield enough. When it is off, the page is not
+    /// <see cref="PageImageResult.Truncated"/> - nothing was cut short; a cheaper method was
+    /// deliberately chosen.</para>
+    /// </remarks>
+    public bool RectifySymbols { get; init; } = true;
 
     public static ImagePolicy Default { get; } = new();
 }
