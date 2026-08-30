@@ -139,11 +139,13 @@ if (resultsPath is not null)
             ["os"] = System.Runtime.InteropServices.RuntimeInformation.OSDescription,
             ["architecture"] = System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString(),
             ["processorCount"] = Environment.ProcessorCount,
-            ["runtime"] = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription
+            ["runtime"] = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription,
+            ["peakMethod"] = PeakMethod()
         },
         ["note"] = "Peak working set is observed from outside the process. These numbers describe "
             + "this machine and this build; they are reproducible evidence, not normative protocol "
-            + "behaviour.",
+            + "behaviour. Compare peakMethod before comparing peaks across platforms: a sampled "
+            + "resident set is a lower bound, a high-water mark is not.",
         ["cases"] = results
     };
 
@@ -223,7 +225,7 @@ static (int ExitCode, long PeakBytes, TimeSpan Elapsed, string StdErr) RunObserv
         try
         {
             process.Refresh();
-            peak = Math.Max(peak, process.PeakWorkingSet64);
+            peak = Math.Max(peak, SamplePeak(process));
         }
         catch (InvalidOperationException)
         {
@@ -236,7 +238,7 @@ static (int ExitCode, long PeakBytes, TimeSpan Elapsed, string StdErr) RunObserv
 
     try
     {
-        peak = Math.Max(peak, process.PeakWorkingSet64);
+        peak = Math.Max(peak, SamplePeak(process));
     }
     catch (InvalidOperationException)
     {
@@ -245,6 +247,75 @@ static (int ExitCode, long PeakBytes, TimeSpan Elapsed, string StdErr) RunObserv
 
     return (process.ExitCode, peak, stopwatch.Elapsed, stderr.ToString());
 }
+
+/// <summary>
+/// The largest resident set this process has held, by whatever means the platform offers.
+/// </summary>
+/// <remarks>
+/// <para>Three different qualities of answer, and the results record which one was used, because
+/// they are not equivalent and a reader comparing platforms deserves to know.</para>
+///
+/// <para><b>Windows</b> keeps a true high-water mark. <b>Linux</b> keeps one too, as
+/// <c>VmHWM</c> in <c>/proc</c>, but .NET does not surface it — <c>PeakWorkingSet64</c> throws on
+/// Unix rather than returning it, which is why this benchmark could not run outside Windows at
+/// all. <b>Everything else</b> falls back to sampling the current resident set every 50 ms and
+/// keeping the maximum, which can miss a spike between samples and should be read as a lower
+/// bound.</para>
+/// </remarks>
+static long SamplePeak(Process process)
+{
+    if (OperatingSystem.IsWindows())
+    {
+        return process.PeakWorkingSet64;
+    }
+
+    if (OperatingSystem.IsLinux())
+    {
+        long hwm = TryReadLinuxHighWaterMark(process.Id);
+        if (hwm > 0)
+        {
+            return hwm;
+        }
+    }
+
+    return process.WorkingSet64;
+}
+
+static long TryReadLinuxHighWaterMark(int pid)
+{
+    try
+    {
+        foreach (string line in File.ReadLines($"/proc/{pid}/status"))
+        {
+            if (!line.StartsWith("VmHWM:", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            string[] parts = line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length >= 2 && long.TryParse(parts[1], out long kilobytes))
+            {
+                return kilobytes * 1024;
+            }
+        }
+    }
+    catch (IOException)
+    {
+        // The process exited and /proc went with it. The sampled value stands.
+    }
+    catch (UnauthorizedAccessException)
+    {
+        // Nothing to be done; fall back to the sampled value.
+    }
+
+    return 0;
+}
+
+/// <summary>Names how <see cref="SamplePeak"/> arrived at its number, for the results file.</summary>
+static string PeakMethod() =>
+    OperatingSystem.IsWindows() ? "windows-peak-working-set"
+    : OperatingSystem.IsLinux() ? "linux-proc-vmhwm"
+    : "sampled-resident-set";
 
 static void TryDelete(string directory)
 {

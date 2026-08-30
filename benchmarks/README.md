@@ -39,15 +39,20 @@ so the corpus is by construction the envelope a creator will emit — not a gues
 
 ## Results
 
-`results-windows-x64.json` carries the machine, runtime, and per-case numbers. Latest run:
+`results-windows-x64.json` carries the machine, runtime, and per-case numbers. Latest run,
+2026-08-30:
 
 | Case | Codec | K | R | S | Peak RSS | Seconds | Output |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| `anchor-guaranteed-size` | LDPC | 15924 | 7962 | 314 | 107 MiB | 3.0 | exact |
-| `anchor-floor-35pct` | LDPC | 16000 | 5600 | 358 | 105 MiB | 6.5 | exact |
-| `anchor-floor-50pct` | LDPC | 16000 | 8000 | 358 | 108 MiB | 5.3 | exact |
-| `max-source-symbols` | Reed–Solomon | 16000 | 7 | 128 | 73 MiB | 1.6 | exact |
-| `max-repair-symbols` | LDPC | 2000 | 8192 | 128 | 52 MiB | 1.1 | exact |
+| `anchor-guaranteed-size` | LDPC | 15924 | 7962 | 314 | 98 MiB | 1.3 | exact |
+| `anchor-floor-35pct` | LDPC | 16000 | 5600 | 358 | 92 MiB | 1.1 | exact |
+| `anchor-floor-50pct` | LDPC | 16000 | 8000 | 358 | 98 MiB | 1.2 | exact |
+| `max-source-symbols` | Reed–Solomon | 16000 | 7 | 128 | 73 MiB | 0.8 | exact |
+| `max-repair-symbols` | LDPC | 2000 | 8192 | 128 | 52 MiB | 0.6 | exact |
+
+Both peak and elapsed have come down since the 2026-08-24 run (107 MiB / 3.0 s on the largest
+shape). Same shapes, same machine, newer build — but a benchmark is not a controlled experiment,
+so treat that as "not worse" rather than as a measured improvement.
 | *baseline (3 frames)* | Reed–Solomon | 2 | 1 | 128 | *26 MiB* | *0.3* | *exact* |
 
 Every case recovers to **byte-exact** output. The largest supported backup restores in about five
@@ -88,6 +93,24 @@ could make a differing frame pass as a duplicate.
 
 That is the whole point of measuring at the boundary: at three frames the duplication is invisible,
 and at twenty-four thousand it is nine megabytes.
+
+## Other platforms
+
+`results-windows-x64.json` is the only results file, and the gap is worth naming rather than
+leaving as an absence: **there are no Linux or macOS numbers yet.**
+
+The tool can now produce them — it could not before, because it asked .NET for a peak working set,
+which is a Windows-only API that throws on Unix rather than returning anything. It now reads the
+kernel's own high-water mark from `/proc/<pid>/status` on Linux, and falls back to sampling the
+resident set every 50 ms elsewhere. Each results file records which method was used, in
+`machine.peakMethod`, because a sampled maximum can miss a spike between samples and is a lower
+bound, whereas a high-water mark is not. Compare `peakMethod` before comparing peaks across
+platforms.
+
+What is still missing is somewhere to run it. CI cannot: the corpus needs creator-side tooling that
+does not exist in this repository, and the corpus itself is too large to commit. So the numbers have
+to be produced on a real machine of each kind, or on a Linux container with the corpus mounted, and
+the results file committed by hand.
 
 ## Running it
 

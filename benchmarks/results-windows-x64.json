@@ -1,13 +1,14 @@
 {
   "tool": "BinaryPaper.Recovery.Benchmarks",
-  "measuredUtc": "2026-08-24T09:23:30.7027133Z",
+  "measuredUtc": "2026-08-30T18:09:33.5914925Z",
   "machine": {
     "os": "Microsoft Windows 10.0.26200",
     "architecture": "X64",
     "processorCount": 16,
-    "runtime": ".NET 10.0.6"
+    "runtime": ".NET 10.0.6",
+    "peakMethod": "windows-peak-working-set"
   },
-  "note": "Peak working set is observed from outside the process. These numbers describe this machine and this build; they are reproducible evidence, not normative protocol behaviour.",
+  "note": "Peak working set is observed from outside the process. These numbers describe this machine and this build; they are reproducible evidence, not normative protocol behaviour. Compare peakMethod before comparing peaks across platforms: a sampled resident set is a lower bound, a high-water mark is not.",
   "cases": [
     {
       "id": "anchor-guaranteed-size",
@@ -16,10 +17,10 @@
       "repairSymbolCount": 7962,
       "symbolLen": 314,
       "frameBytesOnDisk": 8049582,
-      "peakWorkingSetBytes": 111869952,
+      "peakWorkingSetBytes": 102588416,
       "predictedPeakRestoreBytes": 36010456,
       "withinPrediction": false,
-      "elapsedSeconds": 3.05,
+      "elapsedSeconds": 1.29,
       "exitCode": 0,
       "outputExact": true
     },
@@ -30,10 +31,10 @@
       "repairSymbolCount": 5600,
       "symbolLen": 358,
       "frameBytesOnDisk": 8229600,
-      "peakWorkingSetBytes": 110374912,
+      "peakWorkingSetBytes": 96067584,
       "predictedPeakRestoreBytes": 33291904,
       "withinPrediction": false,
-      "elapsedSeconds": 6.54,
+      "elapsedSeconds": 1.1,
       "exitCode": 0,
       "outputExact": true
     },
@@ -44,10 +45,10 @@
       "repairSymbolCount": 8000,
       "symbolLen": 358,
       "frameBytesOnDisk": 9144000,
-      "peakWorkingSetBytes": 113491968,
+      "peakWorkingSetBytes": 102576128,
       "predictedPeakRestoreBytes": 38274304,
       "withinPrediction": false,
-      "elapsedSeconds": 5.31,
+      "elapsedSeconds": 1.21,
       "exitCode": 0,
       "outputExact": true
     },
@@ -58,10 +59,10 @@
       "repairSymbolCount": 7,
       "symbolLen": 128,
       "frameBytesOnDisk": 2417057,
-      "peakWorkingSetBytes": 76443648,
+      "peakWorkingSetBytes": 76144640,
       "predictedPeakRestoreBytes": 4545288,
       "withinPrediction": false,
-      "elapsedSeconds": 1.62,
+      "elapsedSeconds": 0.8,
       "exitCode": 0,
       "outputExact": true
     },
@@ -72,10 +73,10 @@
       "repairSymbolCount": 8192,
       "symbolLen": 128,
       "frameBytesOnDisk": 1538992,
-      "peakWorkingSetBytes": 54030336,
+      "peakWorkingSetBytes": 54976512,
       "predictedPeakRestoreBytes": 18696576,
       "withinPrediction": false,
-      "elapsedSeconds": 1.08,
+      "elapsedSeconds": 0.61,
       "exitCode": 0,
       "outputExact": true
     }
