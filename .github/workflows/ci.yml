@@ -78,13 +78,23 @@ jobs:
           --results-directory artifacts/test-results
           --filter "FullyQualifiedName!~ImageDecodingSurvivesArbitraryMutation"
 
-      # Run separately, because it can take the test host down with it.
+      - name: Conformance suite
+        run: dotnet run --project cli/src/BinaryPaper.Recovery.Cli -c Release --no-build -- verify-vectors vectors
+
+      - name: Vector manifest integrity
+        shell: pwsh
+        run: ./tools/verify-vector-integrity.ps1
+
+      # Run separately, and last, because it can take the test host down with it.
       #
       # The image target drives a native decoder with deliberately corrupted images, and that
       # decoder has a memory-safety defect: it occasionally corrupts its own heap, and the runtime
       # then kills the process with no catchable error. An aborted run loses the results of every
       # sibling target that had not finished, which would let a real regression hide behind a known
       # external fault. Given its own step, a crash fails only itself and the rest still reports.
+      #
+      # Last in the job for the same reason: a failing step skips the ones after it, so anything
+      # placed below this would be hidden by a crash exactly as the sibling targets were.
       #
       # It is deliberately not allowed to fail. The defect is upstream and unfixed, so this step is
       # expected to go red occasionally - most often on the nightly deep run - and that is the
@@ -106,13 +116,6 @@ jobs:
           path: artifacts/test-results
           if-no-files-found: ignore
           retention-days: 14
-
-      - name: Conformance suite
-        run: dotnet run --project cli/src/BinaryPaper.Recovery.Cli -c Release --no-build -- verify-vectors vectors
-
-      - name: Vector manifest integrity
-        shell: pwsh
-        run: ./tools/verify-vector-integrity.ps1
 
   audit:
     name: publication audit
