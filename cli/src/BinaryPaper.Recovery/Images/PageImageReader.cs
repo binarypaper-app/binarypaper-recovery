@@ -293,6 +293,11 @@ public sealed class PageImageReader(ImagePolicy? policy = null, Action<PageImage
                     }
                 }
 
+                // Nothing references the view once the read has its pointer, so without this the
+                // finalizer - which deletes the native view - is free to run while the read is
+                // still using it.
+                GC.KeepAlive(view);
+
                 Report();
 
                 // A full-page read at the pixel cap is minutes on its own, so the budget has to be
@@ -404,6 +409,8 @@ public sealed class PageImageReader(ImagePolicy? policy = null, Action<PageImage
                         decoded = true;
                     }
                 }
+
+                GC.KeepAlive(view);
 
                 if (decoded)
                 {

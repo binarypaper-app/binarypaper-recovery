@@ -76,6 +76,27 @@ jobs:
           dotnet test cli/BinaryPaper.Recovery.slnx -c Release --no-build
           --blame-crash
           --results-directory artifacts/test-results
+          --filter "FullyQualifiedName!~ImageDecodingSurvivesArbitraryMutation"
+
+      # Run separately, because it can take the test host down with it.
+      #
+      # The image target drives a native decoder with deliberately corrupted images, and that
+      # decoder has a memory-safety defect: it occasionally corrupts its own heap, and the runtime
+      # then kills the process with no catchable error. An aborted run loses the results of every
+      # sibling target that had not finished, which would let a real regression hide behind a known
+      # external fault. Given its own step, a crash fails only itself and the rest still reports.
+      #
+      # It is deliberately not allowed to fail. The defect is upstream and unfixed, so this step is
+      # expected to go red occasionally - most often on the nightly deep run - and that is the
+      # honest signal, not something to suppress.
+      - name: Image fuzz target
+        env:
+          BP_FUZZ_ITERATIONS: ${{ needs.scope.outputs.fuzz-iterations }}
+        run: >
+          dotnet test cli/test/BinaryPaper.Recovery.FuzzTests -c Release --no-build
+          --blame-crash
+          --results-directory artifacts/test-results
+          --filter "FullyQualifiedName~ImageDecodingSurvivesArbitraryMutation"
 
       - name: Keep the crash evidence
         if: failure()

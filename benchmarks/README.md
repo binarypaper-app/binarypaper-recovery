@@ -1,3 +1,13 @@
+# Benchmarks
+
+Two tools, answering two different questions. Neither is a conformance check: the vectors decide
+what is correct, and these describe what a build does on a machine.
+
+- **Boundary resources** (below) — can the largest capsule the product writes be recovered on an
+  ordinary machine without exhausting it?
+- **[Page yield](#page-yield)** — on real photographs, how much does each stage of the reading
+  pipeline actually recover, and what does it cost?
+
 # Boundary resource benchmarks
 
 Small conformance vectors answer *"are the bytes and the rejection rules right?"*. These answer a
@@ -96,3 +106,40 @@ not collected yet looks identical to one that cannot.
 
 Ordinary shared CI is not a stable memory benchmark. Record the machine with the results, which
 `results.json` does automatically.
+
+# Page yield
+
+The conformance vectors are clean synthetic renderings by design, so they cannot answer whether the
+reading pipeline earns its cost on a real photograph. This measures four ways of reading the same
+images and reports how many distinct codes each recovers:
+
+| Strategy | What it is |
+| --- | --- |
+| `plain` | the image handed to the decoder as it arrived, one read |
+| `plain-both-binarizers` | the same, union of both binarizers |
+| `whole-page-sweep` | the reader's first pass: two blur levels x two binarizers |
+| `full-pipeline` | the sweep plus rectify-and-retry with lattice prediction |
+
+The gap between the last two is what rectification contributed. It rescues symbols the detector
+located but could not read, so its value tracks how much the detector is struggling rather than how
+hard the page looks — which is why the reader escalates to it only when the sweep has not produced
+enough, rather than always running it.
+
+This tool exists because that gap was once inferred rather than measured. The endpoints were
+compared while two things changed at once, and the expensive stage was credited with a gain that
+belonged to the cheap one. A claim that a stage earns its place should be re-runnable.
+
+## Running it
+
+```bash
+dotnet run --project benchmarks/BinaryPaper.Recovery.PageYield -- <image-directory> --json results.json
+```
+
+**Corpora are not committed and results are not either.** Page photographs are large, and a
+photograph of a screen tends to capture more than the page — a file path, a taskbar, whatever else
+was on it. Point the tool at your own directory. The JSON it writes records counts and timings but
+never the images or their contents.
+
+Numbers vary enormously with capture quality, and that is the finding rather than a nuisance: on a
+corpus where the sweep already reads the page, rectification adds nothing at roughly eight times
+the cost; on one where the sweep falls short, it is the difference between recovering and not.
