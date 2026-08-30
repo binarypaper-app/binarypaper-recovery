@@ -53,6 +53,31 @@ so the corpus is by construction the envelope a creator will emit — not a gues
 Both peak and elapsed have come down since the 2026-08-24 run (107 MiB / 3.0 s on the largest
 shape). Same shapes, same machine, newer build — but a benchmark is not a controlled experiment,
 so treat that as "not worse" rather than as a measured improvement.
+
+`results-linux-x64.json`, 2026-08-30, Ubuntu 24.04 on .NET 10.0.6:
+
+| Case | Codec | K | R | S | Peak RSS | Seconds | Output |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `anchor-guaranteed-size` | LDPC | 15924 | 7962 | 314 | 97 MiB | 0.6 | exact |
+| `anchor-floor-35pct` | LDPC | 16000 | 5600 | 358 | 108 MiB | 0.5 | exact |
+| `anchor-floor-50pct` | LDPC | 16000 | 8000 | 358 | 82 MiB | 0.6 | exact |
+| `max-source-symbols` | Reed–Solomon | 16000 | 7 | 128 | 61 MiB | 0.3 | exact |
+| `max-repair-symbols` | LDPC | 2000 | 8192 | 128 | 56 MiB | 0.2 | exact |
+
+Every shape recovers byte-exact on Linux too, which is the result that matters — the same
+self-contained binary, built from the same source, restores the largest backup the product can
+write on a second platform.
+
+Two honesty notes about that table. It was measured **in a container** on this Windows machine, so
+it is a real Linux kernel, a real glibc build, and a real .NET runtime, but not bare metal — treat
+it as evidence the platform works rather than as a hardware benchmark. And the peaks do not order
+themselves the same way as on Windows: `anchor-floor-35pct` is the hungriest shape here and the
+second-lightest there. That is the garbage collector making different choices with different amounts
+of headroom, not a shape behaving differently, and it is the reason these files record a machine
+rather than a number.
+
+**macOS is still missing.** No such machine is available, and unlike Linux it cannot be reached
+from a container.
 | *baseline (3 frames)* | Reed–Solomon | 2 | 1 | 128 | *26 MiB* | *0.3* | *exact* |
 
 Every case recovers to **byte-exact** output. The largest supported backup restores in about five
@@ -96,21 +121,21 @@ and at twenty-four thousand it is nine megabytes.
 
 ## Other platforms
 
-`results-windows-x64.json` is the only results file, and the gap is worth naming rather than
-leaving as an absence: **there are no Linux or macOS numbers yet.**
+Windows and Linux are measured; **macOS is not**.
 
-The tool can now produce them — it could not before, because it asked .NET for a peak working set,
-which is a Windows-only API that throws on Unix rather than returning anything. It now reads the
-kernel's own high-water mark from `/proc/<pid>/status` on Linux, and falls back to sampling the
-resident set every 50 ms elsewhere. Each results file records which method was used, in
+The tool could not have produced anything outside Windows until recently: it asked .NET for a peak
+working set, which is a Windows-only API that throws on Unix rather than returning a value. It now
+reads the kernel's own high-water mark from `/proc/<pid>/status` on Linux, and falls back to
+sampling the resident set every 50 ms elsewhere. Each results file records which method was used, in
 `machine.peakMethod`, because a sampled maximum can miss a spike between samples and is a lower
-bound, whereas a high-water mark is not. Compare `peakMethod` before comparing peaks across
-platforms.
+bound, whereas a high-water mark is not. **Compare `peakMethod` before comparing peaks across
+platforms** — otherwise you are comparing two different quantities.
 
-What is still missing is somewhere to run it. CI cannot: the corpus needs creator-side tooling that
-does not exist in this repository, and the corpus itself is too large to commit. So the numbers have
-to be produced on a real machine of each kind, or on a Linux container with the corpus mounted, and
-the results file committed by hand.
+CI cannot produce these numbers: the corpus needs creator-side tooling that does not exist in this
+repository, and is too large to commit. They have to be produced by hand and the results file
+committed. The Linux run above was done by staging the corpus, the published CLI and the published
+benchmark inside a `mcr.microsoft.com/dotnet/runtime-deps:10.0` container — staged *inside*, because
+reading the corpus across a bind mount was slow enough to look like a hang.
 
 ## Running it
 

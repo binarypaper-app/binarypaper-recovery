@@ -1,0 +1,84 @@
+{
+  "tool": "BinaryPaper.Recovery.Benchmarks",
+  "measuredUtc": "2026-08-30T18:43:04.7273972Z",
+  "machine": {
+    "os": "Ubuntu 24.04.4 LTS",
+    "architecture": "X64",
+    "processorCount": 16,
+    "runtime": ".NET 10.0.6",
+    "peakMethod": "linux-proc-vmhwm"
+  },
+  "note": "Peak working set is observed from outside the process. These numbers describe this machine and this build; they are reproducible evidence, not normative protocol behaviour. Compare peakMethod before comparing peaks across platforms: a sampled resident set is a lower bound, a high-water mark is not.",
+  "cases": [
+    {
+      "id": "anchor-guaranteed-size",
+      "codec": "ldpc",
+      "sourceSymbolCount": 15924,
+      "repairSymbolCount": 7962,
+      "symbolLen": 314,
+      "frameBytesOnDisk": 8049582,
+      "peakWorkingSetBytes": 102125568,
+      "predictedPeakRestoreBytes": 36010456,
+      "withinPrediction": false,
+      "elapsedSeconds": 0.56,
+      "exitCode": 0,
+      "outputExact": true
+    },
+    {
+      "id": "anchor-floor-35pct",
+      "codec": "ldpc",
+      "sourceSymbolCount": 16000,
+      "repairSymbolCount": 5600,
+      "symbolLen": 358,
+      "frameBytesOnDisk": 8229600,
+      "peakWorkingSetBytes": 112865280,
+      "predictedPeakRestoreBytes": 33291904,
+      "withinPrediction": false,
+      "elapsedSeconds": 0.47,
+      "exitCode": 0,
+      "outputExact": true
+    },
+    {
+      "id": "anchor-floor-50pct",
+      "codec": "ldpc",
+      "sourceSymbolCount": 16000,
+      "repairSymbolCount": 8000,
+      "symbolLen": 358,
+      "frameBytesOnDisk": 9144000,
+      "peakWorkingSetBytes": 85921792,
+      "predictedPeakRestoreBytes": 38274304,
+      "withinPrediction": false,
+      "elapsedSeconds": 0.56,
+      "exitCode": 0,
+      "outputExact": true
+    },
+    {
+      "id": "max-source-symbols",
+      "codec": "reed-solomon",
+      "sourceSymbolCount": 16000,
+      "repairSymbolCount": 7,
+      "symbolLen": 128,
+      "frameBytesOnDisk": 2417057,
+      "peakWorkingSetBytes": 64196608,
+      "predictedPeakRestoreBytes": 4545288,
+      "withinPrediction": false,
+      "elapsedSeconds": 0.3,
+      "exitCode": 0,
+      "outputExact": true
+    },
+    {
+      "id": "max-repair-symbols",
+      "codec": "ldpc",
+      "sourceSymbolCount": 2000,
+      "repairSymbolCount": 8192,
+      "symbolLen": 128,
+      "frameBytesOnDisk": 1538992,
+      "peakWorkingSetBytes": 58413056,
+      "predictedPeakRestoreBytes": 18696576,
+      "withinPrediction": false,
+      "elapsedSeconds": 0.25,
+      "exitCode": 0,
+      "outputExact": true
+    }
+  ]
+}
