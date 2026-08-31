@@ -9,6 +9,7 @@
 # would make the suite fail for whoever cloned it.
 *.bpq binary
 *.bin binary
+*.jpg binary
 *.zip binary
 *.png binary
 *.jpg binary

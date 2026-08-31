@@ -49,6 +49,11 @@ its meanings do not change.
   1.4 MB file. When the bound is reached, the page reports the codes it had already
   decoded and says it stopped early.
 - **Progress reporting while a page is worked**, so a slow page is visibly alive.
+- **A photographed page corpus** under `benchmarks/page-corpus/`. Every other image here is
+  synthetic, and synthetic images cannot catch a decoder that reads a clean rendering perfectly and
+  a photograph not at all — which is exactly the failure that prompted the decoder change. Not
+  conformance vectors: the suite pins the bytes a decoder must produce from a symbol, never how many
+  symbols a detector finds in a photograph.
 - **Page images are read in two passes.** The cheap whole-page sweep runs over everything first,
   and the expensive rectify-and-retry stage runs only if the codes collected are not yet enough to
   recover the capsule. On a corpus of twelve photographs of a 48-symbol page the sweep alone

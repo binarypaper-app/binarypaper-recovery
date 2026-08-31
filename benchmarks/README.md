@@ -203,10 +203,17 @@ belonged to the cheap one. A claim that a stage earns its place should be re-run
 dotnet run --project benchmarks/BinaryPaper.Recovery.PageYield -- <image-directory> --json results.json
 ```
 
-**Corpora are not committed and results are not either.** Page photographs are large, and a
-photograph of a screen tends to capture more than the page — a file path, a taskbar, whatever else
-was on it. Point the tool at your own directory. The JSON it writes records counts and timings but
-never the images or their contents.
+A corpus is committed: [`page-corpus/`](page-corpus/README.md) holds four photographs of a screen
+showing a 35-symbol page, cropped to the page area. They are the only non-synthetic images in the
+repository, and the only ones that could have caught a decoder which reads a rendering perfectly and
+a photograph not at all — which is a failure that actually happened.
+
+```bash
+dotnet run --project benchmarks/BinaryPaper.Recovery.PageYield -- benchmarks/page-corpus
+```
+
+Point it at your own directory instead if you have one. Results are not committed: the JSON records
+counts and timings for one build on one machine, and a stale file of those is worse than none.
 
 Numbers vary enormously with capture quality, and that is the finding rather than a nuisance: on a
 corpus where the sweep already reads the page, rectification adds nothing at roughly eight times
