@@ -45,6 +45,18 @@ jobs:
           dotnet build cli/BinaryPaper.Recovery.slnx -c Release
           dotnet run --project cli/src/BinaryPaper.Recovery.Cli -c Release --no-build -- verify-vectors vectors
 
+      # A release whose changelog still says "Unreleased" tells every reader that nothing has
+      # shipped, on the page announcing that something has. Cheap to forget, cheap to check.
+      - name: Changelog names this release
+        if: startsWith(github.ref, 'refs/tags/recovery-kit-v')
+        shell: bash
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          if ! grep -q "^## \[${tag}\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '## [${tag}]' section. Rename the pending section to this tag before releasing."
+            exit 1
+          fi
+
       # No -AllowMissingPatterns here, ever. This is the run that authorises publication, and it
       # must fail closed if the pattern list is absent.
       - name: Publication audit

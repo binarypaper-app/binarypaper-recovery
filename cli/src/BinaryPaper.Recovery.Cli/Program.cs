@@ -1,6 +1,7 @@
 // Copyright 2026 BinaryPaper
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using BinaryPaper.Recovery;
@@ -72,7 +73,33 @@ namespace BinaryPaper.Recovery.Cli
             }
         }
 
-        private const string ToolVersion = "0.1.0-dev";
+        /// <summary>The kit version this build reports.</summary>
+        /// <remarks>
+        /// <para>Read from the assembly rather than written here. A version string maintained by
+        /// hand is one that is eventually wrong, and this one is load-bearing: it reaches
+        /// <c>--version</c>, the <c>--json</c> contract, and the offline drill's record of what it
+        /// exercised. A released tool misreporting its own version undermines the one thing this
+        /// tool asks people to do, which is check what they are running before they run it.</para>
+        ///
+        /// <para>The release build stamps it; an unstamped build reports <c>0.0.0-dev</c>, which is
+        /// true and could not be mistaken for a release. Build metadata after <c>+</c> is trimmed,
+        /// so this reads the same as the archive it came from.</para>
+        /// </remarks>
+        private static string ToolVersion { get; } = ReadToolVersion();
+
+        private static string ReadToolVersion()
+        {
+            string? informational = typeof(CommandLine).Assembly
+                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+
+            if (string.IsNullOrWhiteSpace(informational))
+            {
+                return "0.0.0-unknown";
+            }
+
+            int metadata = informational.IndexOf('+');
+            return metadata < 0 ? informational : informational[..metadata];
+        }
 
         // ------------------------------------------------------------------ inspect
 

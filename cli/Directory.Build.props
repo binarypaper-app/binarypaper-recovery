@@ -15,6 +15,11 @@
     <!-- No telemetry, no implicit network calls, reproducible where the toolchain allows. -->
     <Deterministic>true</Deterministic>
 
+    <!-- Overridden by tools/build-release.ps1 with the release version. The default says plainly
+         that a build is not a release, because the alternative default is 1.0.0, and a development
+         build claiming to be the first release is exactly the confusion this tool cannot afford. -->
+    <Version>0.0.0-dev</Version>
+
     <Authors>BinaryPaper</Authors>
     <Company>BinaryPaper</Company>
     <Copyright>Copyright 2026 BinaryPaper</Copyright>

@@ -11,10 +11,15 @@ version it recovers.
 Release tags and assets are immutable. A superseded release is marked here; it is
 never replaced or deleted.
 
-## [Unreleased]
+## [recovery-kit-v1.0.0]
 
-Preparing the first release, `recovery-kit-v1.0.0`, describing **capsule wire
-version 1.0** (`format_major = 1`, `format_minor = 0`).
+The first release. Recovers **capsule wire version 1.0** (`format_major = 1`,
+`format_minor = 0`).
+
+Released by the `recovery-kit-v1.0.0` tag; the release page carries the date, the
+archives, their checksums and their build provenance. From this tag onward the
+specification and the conformance vectors are authoritative for wire version 1.0, and
+its meanings do not change.
 
 ### Added
 
@@ -72,6 +77,3 @@ version 1.0** (`format_major = 1`, `format_minor = 0`).
   `ZXingCpp` ships native assets for `win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`,
   `osx-x64` and `osx-arm64`. Those are the six platforms the kit publishes; anywhere else
   you must build zxing-cpp yourself, or work from the specification.
-
-Nothing has been released yet. Until `recovery-kit-v1.0.0` is tagged, no compatibility
-promise is in force and anything in this repository may change.
