@@ -76,8 +76,24 @@ second-lightest there. That is the garbage collector making different choices wi
 of headroom, not a shape behaving differently, and it is the reason these files record a machine
 rather than a number.
 
-**macOS is still missing.** No such machine is available, and unlike Linux it cannot be reached
-from a container.
+`results-osx-arm64.json`, 2026-08-31, macOS 26.5.2 on arm64, .NET 10.0.11:
+
+| Case | Codec | K | R | S | Peak RSS | Seconds | Output |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `anchor-guaranteed-size` | LDPC | 15924 | 7962 | 314 | 101 MiB | 2.5 | exact |
+| `anchor-floor-35pct` | LDPC | 16000 | 5600 | 358 | 88 MiB | 2.1 | exact |
+| `anchor-floor-50pct` | LDPC | 16000 | 8000 | 358 | 109 MiB | 2.2 | exact |
+| `max-source-symbols` | Reed–Solomon | 16000 | 7 | 128 | 75 MiB | 0.5 | exact |
+| `max-repair-symbols` | LDPC | 2000 | 8192 | 128 | 59 MiB | 0.3 | exact |
+
+**Read these peaks as lower bounds.** `peakMethod` is `sampled-resident-set`: macOS offers no
+high-water mark the way Windows and Linux do, so the number is the largest resident set seen at a
+50 ms sampling interval, and a shorter spike between samples would be missed. The elapsed times are
+from a three-processor runner rather than a sixteen-processor desktop, which is most of why they are
+slower.
+
+What the three tables establish together is the thing that matters: every shape recovers
+**byte-exact** on every platform, from the same source, with no platform-specific handling.
 | *baseline (3 frames)* | Reed–Solomon | 2 | 1 | 128 | *26 MiB* | *0.3* | *exact* |
 
 Every case recovers to **byte-exact** output. The largest supported backup restores in about five
@@ -121,7 +137,7 @@ and at twenty-four thousand it is nine megabytes.
 
 ## Other platforms
 
-Windows and Linux are measured; **macOS is not**.
+All three published desktop platforms are measured.
 
 The tool could not have produced anything outside Windows until recently: it asked .NET for a peak
 working set, which is a Windows-only API that throws on Unix rather than returning a value. It now
@@ -131,11 +147,15 @@ sampling the resident set every 50 ms elsewhere. Each results file records which
 bound, whereas a high-water mark is not. **Compare `peakMethod` before comparing peaks across
 platforms** — otherwise you are comparing two different quantities.
 
-CI cannot produce these numbers: the corpus needs creator-side tooling that does not exist in this
-repository, and is too large to commit. They have to be produced by hand and the results file
-committed. The Linux run above was done by staging the corpus, the published CLI and the published
-benchmark inside a `mcr.microsoft.com/dotnet/runtime-deps:10.0` container — staged *inside*, because
-reading the corpus across a bind mount was slow enough to look like a hang.
+This repository's CI cannot produce these numbers: the corpus needs creator-side tooling that does
+not exist here, and is too large to commit. They are produced elsewhere and the results file is
+committed by hand.
+
+The Linux run was done by staging the corpus, the published CLI and the published benchmark inside a
+`mcr.microsoft.com/dotnet/runtime-deps:10.0` container — staged *inside*, because reading the corpus
+across a bind mount was slow enough to look like a hang. The macOS run was done on a hosted runner,
+driven by a workflow in the private creator repository, which is where the corpus generator lives:
+it publishes the CLI for `osx-arm64`, measures, and uploads the results file.
 
 ## Running it
 
