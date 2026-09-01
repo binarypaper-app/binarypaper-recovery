@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Text.Json;
 using BinaryPaper.Recovery;
 using BinaryPaper.Recovery.Images;
 using Xunit;
@@ -115,7 +116,7 @@ public sealed class FuzzTests(ITestOutputHelper output)
         {
             PageImageResult result = reader.Read("fuzz", input);
             Assert.True(result.Failure is not null || result.Symbols.Count > 0);
-        }, allowSuccess: true);
+        }, allowSuccess: true, checkpointPath: Environment.GetEnvironmentVariable("BP_FUZZ_CHECKPOINT"));
     }
 
     [Fact]
@@ -138,7 +139,12 @@ public sealed class FuzzTests(ITestOutputHelper output)
 
     // ------------------------------------------------------------------ harness
 
-    private void RunFuzz(string name, byte[][] corpus, Action<byte[]> parse, bool allowSuccess = false)
+    private void RunFuzz(
+        string name,
+        byte[][] corpus,
+        Action<byte[]> parse,
+        bool allowSuccess = false,
+        string? checkpointPath = null)
     {
         var random = new Random(Seed);
         int rejected = 0;
@@ -149,6 +155,8 @@ public sealed class FuzzTests(ITestOutputHelper output)
         {
             byte[] input = Mutate(random, corpus[random.Next(corpus.Length)]);
             var stopwatch = Stopwatch.StartNew();
+
+            WriteCheckpoint(checkpointPath, name, i, input);
 
             try
             {
@@ -186,6 +194,13 @@ public sealed class FuzzTests(ITestOutputHelper output)
         output.WriteLine($"{name}: {Iterations} mutations, {rejected} rejected, {accepted} accepted, "
             + $"slowest {slowest.TotalMilliseconds:F0}ms");
 
+        if (checkpointPath is not null)
+        {
+            // The same resolution WriteCheckpoint used, so a completed run cannot leave a stale
+            // checkpoint behind for the next failure to be blamed on.
+            File.Delete(Path.GetFullPath(checkpointPath));
+        }
+
         if (!allowSuccess)
         {
             // A fuzzer whose every input is accepted is testing nothing. This catches the case
@@ -193,6 +208,25 @@ public sealed class FuzzTests(ITestOutputHelper output)
             Assert.True(rejected > Iterations / 10,
                 $"{name}: only {rejected} of {Iterations} mutations were rejected; the fuzzer is probably not mutating.");
         }
+    }
+
+    private static void WriteCheckpoint(string? path, string target, int iteration, byte[] input)
+    {
+        if (path is null)
+        {
+            return;
+        }
+
+        string fullPath = Path.GetFullPath(path);
+        Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
+        File.WriteAllText(fullPath, JsonSerializer.Serialize(new
+        {
+            target,
+            seed = Seed,
+            iteration,
+            inputLength = input.Length,
+            prefix = Preview(input),
+        }));
     }
 
     /// <summary>

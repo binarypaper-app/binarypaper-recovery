@@ -18,4 +18,8 @@
     <ProjectReference Include="..\BinaryPaper.Recovery\BinaryPaper.Recovery.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="BinaryPaper.Recovery.Tests" />
+  </ItemGroup>
+
 </Project>

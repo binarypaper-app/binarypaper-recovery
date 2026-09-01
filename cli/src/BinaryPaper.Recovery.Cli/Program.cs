@@ -374,6 +374,12 @@ namespace BinaryPaper.Recovery.Cli
                 Console.Error.WriteLine(
                     $"  image {source}: could not be read — the decoder failed on it twice, so it was skipped");
             }
+
+            foreach (string source in collected.SecondLookFailed)
+            {
+                Console.Error.WriteLine(
+                    $"  image {source}: the closer look failed twice; codes from the first pass were kept");
+            }
         }
 
         private static int UnknownCommand(string command)
@@ -502,7 +508,7 @@ namespace BinaryPaper.Recovery.Cli
                                 System.Globalization.CultureInfo.InvariantCulture,
                                 out maxImageSeconds)
                             || maxImageSeconds < 0
-                            || double.IsNaN(maxImageSeconds))
+                            || !double.IsFinite(maxImageSeconds))
                         {
                             throw new UsageException(
                                 "--max-image-seconds requires a non-negative number (0 disables the bound).");
@@ -637,7 +643,7 @@ namespace BinaryPaper.Recovery.Cli
             Console.Error.WriteLine(
                 $"  not enough codes yet — taking a closer look at {collected.ImagePaths.Count} page image(s)");
 
-            FrameInput.TakeSecondLook(collected, options.ImagePolicy);
+            FrameInput.TakeSecondLook(collected, options.ImagePolicy, progress);
             ingest = CapsuleRecovery.Ingest(collected.Frames);
             return collected;
         }
@@ -673,6 +679,9 @@ namespace BinaryPaper.Recovery.Cli
 
         /// <summary>Pages a second look could not read at all, because every attempt died.</summary>
         public List<string> Unreadable { get; } = [];
+
+        /// <summary>Pages whose cheap result survived but whose closer look died twice.</summary>
+        public List<string> SecondLookFailed { get; } = [];
     }
 
     /// <summary>
@@ -717,10 +726,6 @@ namespace BinaryPaper.Recovery.Cli
             List<PageImageResult> images = collected.Images;
             var seenPaths = new HashSet<string>(StringComparer.Ordinal);
 
-            // The first pass over every page is the cheap one: the whole-page sweep, no
-            // rectification. On the pages this tool is built for it is also the last one.
-            var reader = new PageImageReader(policy with { RectifySymbols = false }, progress);
-
             foreach (string file in files)
             {
                 string full = Path.GetFullPath(file);
@@ -735,7 +740,11 @@ namespace BinaryPaper.Recovery.Cli
                 // Content decides, not the extension. A .bpq holding a PNG is a PNG.
                 if (PageImageReader.LooksLikeImage(bytes))
                 {
-                    PageImageResult result = reader.Read(name, bytes);
+                    PageImageResult? result = PageWorker.Read(
+                        file, name, policy with { RectifySymbols = false }, progress);
+                    result ??= new PageImageResult(
+                        name, 0, 0, [], "the isolated decoder failed twice during the first pass");
+
                     images.Add(result);
                     collected.ImagePaths.Add(file);
                     foreach (DecodedSymbol symbol in result.Symbols)
@@ -766,7 +775,10 @@ namespace BinaryPaper.Recovery.Cli
         /// a page that read well the first time is simply read again, and duplicate payloads are
         /// already handled by the session layer.</para>
         /// </remarks>
-        public static void TakeSecondLook(CollectedInput collected, ImagePolicy policy)
+        public static void TakeSecondLook(
+            CollectedInput collected,
+            ImagePolicy policy,
+            Action<PageImageProgress>? progress = null)
         {
             var rectifying = policy with { RectifySymbols = true };
 
@@ -775,11 +787,20 @@ namespace BinaryPaper.Recovery.Cli
                 string path = collected.ImagePaths[i];
                 string name = Path.GetFileName(path);
 
-                PageImageResult? result = PageWorker.Read(path, name, rectifying);
+                PageImageResult? result = PageWorker.Read(path, name, rectifying, progress);
                 if (result is null)
                 {
-                    // Every attempt died. The page is lost; the run is not.
-                    collected.Unreadable.Add(name);
+                    // Every attempt died. Keep any codes from the cheap pass; only a page whose
+                    // cheap pass also died is entirely unreadable.
+                    if (collected.Images[i].Failure is null)
+                    {
+                        collected.SecondLookFailed.Add(name);
+                    }
+                    else
+                    {
+                        collected.Unreadable.Add(name);
+                    }
+
                     continue;
                 }
 

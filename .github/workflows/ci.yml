@@ -64,9 +64,7 @@ jobs:
       - name: Build
         run: dotnet build cli/BinaryPaper.Recovery.slnx -c Release
 
-      # --blame-crash: a fuzz target that takes the test host down otherwise reports only "Test
-      # host process crashed", which names neither the test nor the input. With it, the run leaves
-      # a sequence file naming the test that was executing and a dump beside it.
+      # --blame-crash leaves a sequence file naming a managed test if its host terminates.
       - name: Unit and fuzz tests
         env:
           # The seed is fixed, so a short run is a prefix of the long one: it explores nothing the
@@ -85,35 +83,48 @@ jobs:
         shell: pwsh
         run: ./tools/verify-vector-integrity.ps1
 
-      # Run separately, and last, because it can take the test host down with it.
-      #
-      # The image target drives a native decoder with deliberately corrupted images, and that
-      # decoder has a memory-safety defect: it occasionally corrupts its own heap, and the runtime
-      # then kills the process with no catchable error. An aborted run loses the results of every
-      # sibling target that had not finished, which would let a real regression hide behind a known
-      # external fault. Given its own step, a crash fails only itself and the rest still reports.
-      #
-      # Last in the job for the same reason: a failing step skips the ones after it, so anything
-      # placed below this would be hidden by a crash exactly as the sibling targets were.
-      #
-      # It is deliberately not allowed to fail. The defect is upstream and unfixed, so this step is
-      # expected to go red occasionally - most often on the nightly deep run - and that is the
-      # honest signal, not something to suppress.
+  # The native image target gets its own job. A native crash is still a real red signal, but it
+  # cannot hide the conformance checks above or prevent the independent offline archive drill.
+  image-fuzz:
+    name: image fuzz (${{ matrix.os }})
+    needs: scope
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJSON(needs.scope.outputs.platforms) }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build image fuzz target
+        run: dotnet build cli/test/BinaryPaper.Recovery.FuzzTests -c Release
+
       - name: Image fuzz target
         env:
           BP_FUZZ_ITERATIONS: ${{ needs.scope.outputs.fuzz-iterations }}
+          # Absolute, and rooted at the workspace: dotnet test resolves a relative path from
+          # the test host's working directory, which is under the build output tree, while
+          # upload-artifact looks in the workspace. A crash would leave the evidence unreachable.
+          BP_FUZZ_CHECKPOINT: ${{ github.workspace }}/artifacts/fuzz/image-fuzz-checkpoint.json
         run: >
           dotnet test cli/test/BinaryPaper.Recovery.FuzzTests -c Release --no-build
           --blame-crash
           --results-directory artifacts/test-results
           --filter "FullyQualifiedName~ImageDecodingSurvivesArbitraryMutation"
 
-      - name: Keep the crash evidence
+      - name: Keep compact crash evidence
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-${{ matrix.os }}
-          path: artifacts/test-results
+          name: image-fuzz-evidence-${{ matrix.os }}
+          path: |
+            artifacts/fuzz
+            artifacts/test-results/**/Sequence_*.xml
           if-no-files-found: ignore
           retention-days: 14
 

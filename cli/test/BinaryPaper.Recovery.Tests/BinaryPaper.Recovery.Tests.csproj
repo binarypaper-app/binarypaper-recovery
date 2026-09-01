@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\BinaryPaper.Recovery\BinaryPaper.Recovery.csproj" />
+    <ProjectReference Include="..\..\src\BinaryPaper.Recovery.Cli\BinaryPaper.Recovery.Cli.csproj" />
   </ItemGroup>
 
 </Project>

@@ -73,7 +73,7 @@ The split matters because the second pass is roughly eight times the cost of the
 nothing when the first already read the page. It rescues symbols the detector located but could not
 read, so its value tracks how much the detector is struggling rather than how hard the page looks.
 
-**The closer look runs one page at a time, each in its own short-lived child process.** QR payloads
+**Every pass runs one page at a time, each in its own short-lived child process.** QR payloads
 are turned into bytes by a native decoder, and a native decoder handed a damaged image can corrupt
 its own memory; when that happens the process is killed outright, with no error to catch. Reading
 each page in isolation means such a failure costs that page rather than every page already read. A

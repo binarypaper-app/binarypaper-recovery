@@ -9,6 +9,7 @@
     <!-- The page pipeline's geometry helpers are implementation detail, but they are exactly the
          part worth testing directly: a vector can only reach them through a whole page. -->
     <InternalsVisibleTo Include="BinaryPaper.Recovery.Tests" />
+    <InternalsVisibleTo Include="page-yield" />
   </ItemGroup>
 
   <ItemGroup>

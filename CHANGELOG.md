@@ -58,10 +58,12 @@ its meanings do not change.
   and the expensive rectify-and-retry stage runs only if the codes collected are not yet enough to
   recover the capsule. On a corpus of twelve photographs of a 48-symbol page the sweep alone
   recovered all 45 readable symbols, and rectification added none at eight times the cost.
-- **The second pass reads each page in its own child process.** A native decoder handed a damaged
+- **Every page pass reads each page in its own child process.** A native decoder handed a damaged
   image can corrupt its memory and take the process down with no catchable error, which would
   otherwise discard the frames already recovered from every other page. A page whose child dies is
-  retried once in a fresh process, then reported and skipped.
+  retried once in a fresh process, then reported and skipped. The managed/native boundary also pins
+  each pixel buffer through the complete read and deterministically disposes native options and
+  barcode results.
 - An image above the pixel cap is now refused **from its header**, without being decoded, as the
   specification requires. Encoded size does not predict decoded size — a 439 KB file can declare
   400 megapixels — so deciding after the decode meant the allocation the cap exists to prevent had

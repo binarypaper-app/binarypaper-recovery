@@ -194,14 +194,18 @@ internal static class VerifyVectors
     /// </remarks>
     private static void VerifyImage(string directory, JsonElement root, JsonElement expected)
     {
-        var reader = new PageImageReader();
         var decoded = new List<byte[]>();
 
         foreach (JsonElement input in root.GetProperty("inputs").EnumerateArray())
         {
             string path = input.GetProperty("path").GetString()!;
-            byte[] bytes = File.ReadAllBytes(Path.Combine(directory, path));
-            PageImageResult result = reader.Read(path, bytes);
+            string fullPath = Path.Combine(directory, path);
+            PageImageResult? result = PageWorker.Read(fullPath, path, ImagePolicy.Default);
+            if (result is null)
+            {
+                throw new InvalidOperationException(
+                    $"image '{path}': the isolated decoder failed twice");
+            }
 
             if (result.Failure is not null && result.Symbols.Count == 0)
             {

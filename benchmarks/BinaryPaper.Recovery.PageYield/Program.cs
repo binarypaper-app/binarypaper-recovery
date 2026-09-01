@@ -162,11 +162,10 @@ return 0;
 static HashSet<string> Decode(ImageResult image, Binarizer[] binarizers)
 {
     var found = new HashSet<string>(StringComparer.Ordinal);
-    var view = new ImageView(image.Data, image.Width, image.Height, ImageFormat.Lum);
 
     foreach (Binarizer binarizer in binarizers)
     {
-        var options = new ReaderOptions
+        using var options = new ReaderOptions
         {
             Formats = BarcodeFormat.QRCode,
             TryHarder = true,
@@ -178,16 +177,15 @@ static HashSet<string> Decode(ImageResult image, Binarizer[] binarizers)
             Binarizer = binarizer,
         };
 
-        foreach (Barcode barcode in BarcodeReader.Read(view, options))
+        NativeBarcodeReader.Read(image.Data, image.Width, image.Height, ImageFormat.Lum, options, barcode =>
         {
             if (barcode.IsValid && barcode.Bytes is { Length: > 0 })
             {
                 found.Add(Hash(barcode.Bytes));
             }
-        }
+        });
     }
 
-    GC.KeepAlive(view);
     return found;
 }
 

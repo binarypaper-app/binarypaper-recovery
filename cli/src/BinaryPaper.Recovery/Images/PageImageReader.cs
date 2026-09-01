@@ -279,11 +279,11 @@ public sealed class PageImageReader(ImagePolicy? policy = null, Action<PageImage
         foreach (double sigma in new[] { 0.0, 1.4 })
         {
             byte[] plane = PageFilter.Blur(grey, width, height, sigma);
-            var view = new ImageView(plane, width, height, ImageFormat.Lum);
 
             foreach (Binarizer binarizer in new[] { Binarizer.LocalAverage, Binarizer.GlobalHistogram })
             {
-                foreach (Barcode barcode in BarcodeReader.Read(view, Options(binarizer, returnErrors: true)))
+                using ReaderOptions options = Options(binarizer, returnErrors: true);
+                NativeBarcodeReader.Read(plane, width, height, ImageFormat.Lum, options, barcode =>
                 {
                     Accept(barcode);
                     Quad? quad = Quad.From(barcode.Position);
@@ -291,12 +291,7 @@ public sealed class PageImageReader(ImagePolicy? policy = null, Action<PageImage
                     {
                         cells.Add(quad);
                     }
-                }
-
-                // Nothing references the view once the read has its pointer, so without this the
-                // finalizer - which deletes the native view - is free to run while the read is
-                // still using it.
-                GC.KeepAlive(view);
+                });
 
                 Report();
 
@@ -393,24 +388,22 @@ public sealed class PageImageReader(ImagePolicy? policy = null, Action<PageImage
             foreach (double sigma in new[] { 0.0, 1.0, 1.6, 0.6, 2.2, 1.3, 2.8 })
             {
                 byte[] plane = PageFilter.Blur(warp, size, size, sigma);
-                var view = new ImageView(plane, size, size, ImageFormat.Lum);
 
                 foreach (Binarizer binarizer in
                          new[] { Binarizer.LocalAverage, Binarizer.GlobalHistogram, Binarizer.FixedThreshold })
                 {
-                    foreach (Barcode barcode in BarcodeReader.Read(view, Options(binarizer, returnErrors: false)))
+                    using ReaderOptions options = Options(binarizer, returnErrors: false);
+                    NativeBarcodeReader.Read(plane, size, size, ImageFormat.Lum, options, barcode =>
                     {
                         if (!barcode.IsValid)
                         {
-                            continue;
+                            return;
                         }
 
                         accept(barcode);
                         decoded = true;
-                    }
+                    });
                 }
-
-                GC.KeepAlive(view);
 
                 if (decoded)
                 {
