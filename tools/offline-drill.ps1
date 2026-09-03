@@ -126,7 +126,7 @@ try {
         --env DOTNET_BUNDLE_EXTRACT_BASE_DIR=/tmp/dotnet-bundle `
         --tmpfs /tmp:rw,exec,size=512m --mount "type=bind,source=$scratch,target=/drill" `
         --workdir /drill --entrypoint /bin/sh $ContainerImage -c `
-        'test "$(ls /sys/class/net)" = lo || exit 97; chmod +x /drill/tool/binarypaper; /drill/tool/binarypaper --version; exec /drill/tool/binarypaper recover /drill/pages --output /drill/recovered'
+        'test -d /sys/class/net/lo || exit 97; for interface in /sys/class/net/*; do if [ -d "$interface" ] && [ "${interface##*/}" != lo ]; then exit 97; fi; done; chmod +x /drill/tool/binarypaper; /drill/tool/binarypaper --version; exec /drill/tool/binarypaper recover /drill/pages --output /drill/recovered'
     if ($LASTEXITCODE -ne 0) { throw 'Docker could not create the isolated recovery process' }
     $isolation = docker inspect $containerId --format '{{.HostConfig.NetworkMode}}'
     if ($LASTEXITCODE -ne 0 -or $isolation -ne 'none') { throw 'Networking was not disabled; refusing to run the drill' }
