@@ -129,7 +129,7 @@
     {
       "id": "many-paths",
       "sourceSymbolCount": 4096,
-      "repairSymbolCount": 256,
+      "repairSymbolCount": 205,
       "symbolLen": 1024,
       "erasureAlg": 1,
       "missingSourceCount": 64,
@@ -137,7 +137,7 @@
       "compressed": false,
       "contentBytes": 0,
       "entryCount": 4096,
-      "predictedPeakRestoreBytes": 13369344
+      "predictedPeakRestoreBytes": 12293448
     },
     {
       "id": "ldpc-missing-source",
