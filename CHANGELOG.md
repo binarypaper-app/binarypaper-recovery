@@ -23,6 +23,12 @@ its meanings do not change.
 
 ### Added
 
+- Public, deterministic boundary recipes and measurements covering parameter limits,
+  missing source codes, encrypted capacity, large decompressed output, and UTF-8 paths.
+  Release rehearsals retain the complete artifacts and cross-platform measurement evidence.
+- Network-disabled PNG/JPEG recovery drills in isolated containers, with checksum-verified
+  archives and recorded output hashes. The SBOM includes the exact bundled .NET runtimes.
+
 - **The specification.** `protocol/1.0/` defines capsule wire version 1.0 byte by byte,
   with the required reader behaviour, the validation order, the stable failure categories,
   and the threat model in `SECURITY-CONSIDERATIONS.md`. `protocol/registries/` pins the
@@ -79,6 +85,9 @@ its meanings do not change.
   self-contained binary, so the terms of everything inside it travel with it.
 
 ### Changed
+
+- `--password-stdin` reads strict UTF-8 independently of console code pages. This fixes
+  redirected non-ASCII passwords on Windows; NFC password normalization is unchanged.
 
 - The QR decoder is now `ZXingCpp` (the zxing-cpp project's .NET binding), replacing
   `ZXing.Net`. `ZXing.Net` builds its sampling grid from a single alignment pattern and

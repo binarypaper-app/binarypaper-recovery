@@ -410,7 +410,7 @@ namespace BinaryPaper.Recovery.Cli
             OPTIONS
               --output <dir>          where to write recovered content (recover only)
               --overwrite             replace a non-empty output directory
-              --password-stdin        read the password from standard input
+              --password-stdin        read one UTF-8 password line from standard input
               --json                  machine-readable output on stdout
               --max-output-bytes <n>  cap the decompressed package size
               --max-image-pixels <n>  cap the decoded pixel count per page image
@@ -578,8 +578,7 @@ namespace BinaryPaper.Recovery.Cli
         {
             if (PasswordFromStdin)
             {
-                string? line = Console.In.ReadLine();
-                return string.IsNullOrEmpty(line) ? null : line;
+                return PasswordInput.ReadUtf8(Console.OpenStandardInput());
             }
 
             if (Console.IsInputRedirected)

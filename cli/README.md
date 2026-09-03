@@ -111,6 +111,9 @@ alive rather than indistinguishable from a hang.
 ### Passwords
 
 Read from a hidden interactive prompt, or from standard input with `--password-stdin`.
+Standard input is one UTF-8 line (an optional UTF-8 BOM is accepted), independent of
+the machine's console code page. Invalid UTF-8 is a usage error. NFC normalization
+then follows the capsule specification, so composed and decomposed passwords agree.
 
 There is deliberately **no `--password` flag**. Command lines are visible to other
 processes on most systems and are recorded in shell history, and a recovery tool that

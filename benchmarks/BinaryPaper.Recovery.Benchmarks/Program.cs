@@ -27,6 +27,7 @@ if (args.Length < 2)
 string corpusRoot = args[0];
 string cliPath = args[1];
 string? resultsPath = OptionalOption(args, "--output");
+string? selectedCase = OptionalOption(args, "--case");
 
 string corpusManifest = Path.Combine(corpusRoot, "corpus.json");
 if (!File.Exists(corpusManifest))
@@ -36,6 +37,11 @@ if (!File.Exists(corpusManifest))
 }
 
 JsonArray cases = JsonNode.Parse(File.ReadAllText(corpusManifest))!.AsArray();
+if (selectedCase is not null)
+{
+    cases = new JsonArray(cases.Where(c => c!["id"]!.GetValue<string>() == selectedCase).Select(c => c!.DeepClone()).ToArray());
+    if (cases.Count != 1) throw new ArgumentException("--case must name exactly one corpus case");
+}
 var results = new JsonArray();
 int failures = 0;
 
@@ -231,6 +237,7 @@ static (int ExitCode, long PeakBytes, TimeSpan Elapsed, string StdErr) RunObserv
         RedirectStandardOutput = true,
         RedirectStandardError = true,
         RedirectStandardInput = true,
+        StandardInputEncoding = new UTF8Encoding(false),
         UseShellExecute = false,
         CreateNoWindow = true
     };
