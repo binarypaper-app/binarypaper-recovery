@@ -214,6 +214,22 @@ else {
         }
     }
 
+    $projectXml = [xml](Get-Content 'cli/src/BinaryPaper.Recovery/BinaryPaper.Recovery.csproj' -Raw)
+    foreach ($reference in $projectXml.Project.ItemGroup.PackageReference | Where-Object { $_.Include }) {
+        $entry = $components.packages | Where-Object { $_.name -eq $reference.Include }
+        if ($entry -and $entry.version -ne $reference.Version) {
+            Add-Finding 'dependency' "component version disagrees with the build: $($reference.Include)"
+        }
+    }
+    $codecReadme = Get-Content 'cli/src/BinaryPaper.Recovery.Codecs/README.md' -Raw
+    foreach ($component in $components.vendored) {
+        $namePattern = [regex]::Escape($component.name)
+        $versionPattern = [regex]::Escape($component.version)
+        if ($codecReadme -notmatch ($namePattern + '`?\s*\|\s*' + $versionPattern + '\s*\|')) {
+            Add-Finding 'dependency' "vendored component version disagrees with provenance: $($component.name)"
+        }
+    }
+
     Write-Host "   checked $($declared.Count) third-party notice(s) against the build"
 }
 

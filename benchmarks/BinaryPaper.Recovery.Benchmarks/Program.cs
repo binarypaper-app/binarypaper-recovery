@@ -51,21 +51,30 @@ foreach (JsonNode? node in cases)
     int s = c["symbolLen"]!.GetValue<int>();
     string codec = c["erasureAlg"]!.GetValue<int>() == 2 ? "ldpc" : "reed-solomon";
     long predicted = c["predictedPeakRestoreBytes"]!.GetValue<long>();
-    string expectedHash = c["expectedOutputSha256"]!.GetValue<string>();
+    string? expectedHash = c["expectedOutputSha256"]?.GetValue<string>();
+    JsonArray? expectedOutputs = c["outputs"]?.AsArray();
+    string? password = c["password"]?["value"]?.GetValue<string>();
+    if (password is not null && c["password"]?["kind"]?.GetValue<string>() != "public-test-value")
+        throw new InvalidDataException("Only explicitly labelled public fixture passwords are accepted");
 
     string caseDirectory = Path.Combine(corpusRoot, id);
     string framesDirectory = Path.Combine(caseDirectory, "frames");
     string outputDirectory = Path.Combine(caseDirectory, "recovered");
 
-    long extractedBytes = ExtractFrames(Path.Combine(caseDirectory, "frames.bin"), framesDirectory);
+    string containerPath = Path.Combine(caseDirectory, "frames.bin");
+    string containerHash = Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(containerPath)));
+    if (c["framesContainerSha256"] is not null && containerHash != c["framesContainerSha256"]!.GetValue<string>())
+        throw new InvalidDataException($"{id}: frame container hash mismatch");
+    long extractedBytes = ExtractFrames(containerPath, framesDirectory);
 
     if (Directory.Exists(outputDirectory))
     {
         Directory.Delete(outputDirectory, recursive: true);
     }
 
-    (int exitCode, long peakBytes, TimeSpan elapsed, string stderr) =
-        RunObserved(cliPath, ["recover", framesDirectory, "--output", outputDirectory]);
+    string[] recoveryArgs = password is null ? ["recover", framesDirectory, "--output", outputDirectory]
+        : ["recover", framesDirectory, "--output", outputDirectory, "--password-stdin"];
+    (int exitCode, long peakBytes, TimeSpan elapsed, string stderr) = RunObserved(cliPath, recoveryArgs, password);
 
     string actualHash = "-";
     bool exact = false;
@@ -75,7 +84,19 @@ foreach (JsonNode? node in cases)
             ? Directory.GetFiles(outputDirectory).FirstOrDefault(f => !f.EndsWith("RECOVERED.txt", StringComparison.Ordinal))
             : null;
 
-        if (recovered is not null)
+        if (expectedOutputs is not null)
+        {
+            exact = Directory.GetFiles(outputDirectory, "*", SearchOption.AllDirectories).Length == expectedOutputs.Count + 1;
+            foreach (JsonNode? output in expectedOutputs)
+            {
+                string path = Path.GetFullPath(Path.Combine(outputDirectory, output!["path"]!.GetValue<string>()));
+                if (!path.StartsWith(Path.GetFullPath(outputDirectory) + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+                    throw new InvalidDataException("Expected output escapes the case directory");
+                exact &= File.Exists(path) && new FileInfo(path).Length == output["length"]!.GetValue<long>()
+                    && Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(path))) == output["sha256"]!.GetValue<string>();
+            }
+        }
+        else if (recovered is not null)
         {
             actualHash = Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(recovered)));
             exact = actualHash == expectedHash;
@@ -109,6 +130,15 @@ foreach (JsonNode? node in cases)
         ["repairSymbolCount"] = r,
         ["symbolLen"] = s,
         ["frameBytesOnDisk"] = extractedBytes,
+        ["framesContainerSha256"] = containerHash,
+        ["missingSourceCount"] = c["missingSourceCount"]?.DeepClone(),
+        ["decodeStage"] = c["decodeStage"]?.DeepClone(),
+        ["residualUnknownCount"] = c["residualUnknownCount"]?.DeepClone(),
+        ["encrypted"] = password is not null,
+        ["packageBytes"] = c["packageBytes"]?.DeepClone(),
+        ["outputFileCount"] = expectedOutputs?.Count ?? 1,
+        ["outputBytesOnDisk"] = Directory.Exists(outputDirectory)
+            ? Directory.GetFiles(outputDirectory, "*", SearchOption.AllDirectories).Sum(path => new FileInfo(path).Length) : 0,
         ["peakWorkingSetBytes"] = peakBytes,
         ["predictedPeakRestoreBytes"] = predicted,
         ["withinPrediction"] = peakBytes <= predicted,
@@ -134,6 +164,8 @@ if (resultsPath is not null)
     {
         ["tool"] = "BinaryPaper.Recovery.Benchmarks",
         ["measuredUtc"] = DateTime.UtcNow.ToString("O"),
+        ["corpusManifestSha256"] = Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(corpusManifest))),
+        ["cliSha256"] = Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(cliPath))),
         ["machine"] = new JsonObject
         {
             ["os"] = System.Runtime.InteropServices.RuntimeInformation.OSDescription,
@@ -192,14 +224,15 @@ static long ExtractFrames(string containerPath, string outputDirectory)
 /// <summary>
 /// Runs the CLI and observes its peak working set from the parent process.
 /// </summary>
-static (int ExitCode, long PeakBytes, TimeSpan Elapsed, string StdErr) RunObserved(string executable, string[] arguments)
+static (int ExitCode, long PeakBytes, TimeSpan Elapsed, string StdErr) RunObserved(string executable, string[] arguments, string? password)
 {
     var info = new ProcessStartInfo(executable)
     {
         RedirectStandardOutput = true,
         RedirectStandardError = true,
         RedirectStandardInput = true,
-        UseShellExecute = false
+        UseShellExecute = false,
+        CreateNoWindow = true
     };
 
     foreach (string argument in arguments)
@@ -210,8 +243,8 @@ static (int ExitCode, long PeakBytes, TimeSpan Elapsed, string StdErr) RunObserv
     var stopwatch = Stopwatch.StartNew();
     using var process = Process.Start(info)!;
 
-    // Close stdin immediately: these capsules are unencrypted, and a tool waiting on a password
-    // prompt would look exactly like a hang.
+    // The only password is labelled public fixture data. Pass it through stdin, never argv/logs.
+    if (password is not null) process.StandardInput.WriteLine(password);
     process.StandardInput.Close();
 
     var stderr = new StringBuilder();

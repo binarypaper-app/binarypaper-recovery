@@ -15,7 +15,8 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][string]$Version,
-    [Parameter(Mandatory)][string]$OutputPath
+    [Parameter(Mandatory)][string]$OutputPath,
+    [Parameter(Mandatory)][object[]]$ResolvedComponents
 )
 
 $ErrorActionPreference = 'Stop'
@@ -30,7 +31,7 @@ $namespace = "https://binarypaper.app/spdx/binarypaper-recovery-$Version-$([guid
 $components = Get-Content -LiteralPath (Join-Path (Split-Path -Parent $PSScriptRoot) 'third-party/components.json') -Raw |
     ConvertFrom-Json
 
-$packages = $components.packages
+$packages = @($ResolvedComponents | Sort-Object name, version -Unique)
 $vendored = $components.vendored
 
 $builder = [System.Text.StringBuilder]::new()
@@ -85,6 +86,7 @@ foreach ($component in ($packages + $vendored)) {
 [void]$builder.AppendLine('  "relationships": [')
 
 $relationships = [System.Collections.Generic.List[string]]::new()
+$relationships.Add('{ "spdxElementId": "SPDXRef-DOCUMENT", "relationshipType": "DESCRIBES", "relatedSpdxElement": "SPDXRef-Package-binarypaper-recovery" }')
 foreach ($component in ($packages + $vendored)) {
     $id = "SPDXRef-Package-$($component.name -replace '[^A-Za-z0-9]', '-')"
     $relationships.Add(@"

@@ -25,6 +25,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][string]$RuntimeIdentifier,
+    [Parameter(Mandatory)][string]$RuntimeVersion,
     [Parameter(Mandatory)][string]$OutputPath
 )
 
@@ -96,10 +97,8 @@ if (-not (Test-Path -LiteralPath $packRoot)) {
     throw "no .NET runtime pack for $RuntimeIdentifier under $packageRoot; publish it before writing notices"
 }
 
-# Highest version present: the publish restored it, and a stale sibling must not win.
-$pack = Get-ChildItem -LiteralPath $packRoot -Directory |
-    Sort-Object { [version]($_.Name -replace '-.*$', '') } |
-    Select-Object -Last 1
+# Match the binary's dependency graph, never a different SDK's cached runtime.
+$pack = Get-Item -LiteralPath (Join-Path $packRoot $RuntimeVersion)
 
 foreach ($file in @('LICENSE.TXT', 'THIRD-PARTY-NOTICES.TXT')) {
     $path = Join-Path $pack.FullName $file

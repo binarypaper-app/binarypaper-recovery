@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../cli/Directory.Build.props" />
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <Description>Deterministic synthetic benchmark fixtures; not part of the recovery executable.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../cli/src/BinaryPaper.Recovery/BinaryPaper.Recovery.csproj" />
+  </ItemGroup>
+</Project>

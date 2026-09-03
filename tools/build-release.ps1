@@ -18,7 +18,7 @@
     checksum you can only obtain by executing the thing you are checking is not a check.
 
 .PARAMETER Version
-    The kit version, e.g. 1.0.0. Used in artifact names only.
+    The kit version, e.g. 1.0.0. Used in artifact names and assembly metadata.
 
 .PARAMETER OutputDirectory
     Where to place the artifacts.
@@ -46,14 +46,19 @@ if ($Version -notmatch '^\d+\.\d+\.\d+(\.\d+)?([-+][0-9A-Za-z.-]+)*$') {
 Push-Location $repoRoot
 
 try {
-    $output = Join-Path $repoRoot $OutputDirectory
-    if (Test-Path $output) { Remove-Item $output -Recurse -Force }
+    $output = [IO.Path]::GetFullPath((Join-Path $repoRoot $OutputDirectory))
+    $rootPrefix = [IO.Path]::GetFullPath($repoRoot).TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+    if (-not $output.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'OutputDirectory must be a child directory of this repository'
+    }
+    if (Test-Path $output) { throw "Output directory already exists: $output. Choose a new directory." }
     New-Item -ItemType Directory -Path $output | Out-Null
 
     Write-Host "Building recovery kit $Version"
     Write-Host ('=' * 60)
 
     # ----------------------------------------------------------- CLI archives
+    $resolvedComponents = @()
     foreach ($rid in $RuntimeIdentifiers) {
         Write-Host "`n  $rid"
         $stage = Join-Path $output "stage-$rid"
@@ -65,6 +70,11 @@ try {
             -o $stage --nologo -v quiet
 
         if ($LASTEXITCODE -ne 0) { throw "publish failed for $rid" }
+
+        $depsPath = Join-Path $repoRoot "cli/src/BinaryPaper.Recovery.Cli/bin/Release/net10.0/$rid/binarypaper.deps.json"
+        $resolved = @(& (Join-Path $PSScriptRoot 'read-release-dependencies.ps1') -DepsPath $depsPath -RuntimeIdentifier $rid)
+        $resolvedComponents += $resolved
+        $runtime = $resolved | Where-Object { $_.name -eq "Microsoft.NETCore.App.Runtime.$rid" }
 
         # Every archive carries its own licence and notices. Someone who downloads one binary and
         # nothing else must still receive the terms it is offered under.
@@ -79,6 +89,7 @@ try {
         # and NOTICE promises this file by name.
         & (Join-Path $PSScriptRoot 'write-third-party-notices.ps1') `
             -RuntimeIdentifier $rid `
+            -RuntimeVersion $runtime.version `
             -OutputPath (Join-Path $stage 'THIRD-PARTY-NOTICES')
 
         if ($LASTEXITCODE -ne 0) { throw "third-party notices failed for $rid" }
@@ -107,7 +118,7 @@ try {
     # ----------------------------------------------------------- SBOM
     Write-Host "`n  SBOM"
     $sbomPath = Join-Path $output "binarypaper-recovery-$Version.spdx.json"
-    & (Join-Path $PSScriptRoot 'write-sbom.ps1') -Version $Version -OutputPath $sbomPath
+    & (Join-Path $PSScriptRoot 'write-sbom.ps1') -Version $Version -OutputPath $sbomPath -ResolvedComponents $resolvedComponents
     if ($LASTEXITCODE -ne 0) { throw 'SBOM generation failed' }
 
     # ----------------------------------------------------------- checksums

@@ -10,6 +10,57 @@ what is correct, and these describe what a build does on a machine.
 
 # Boundary resource benchmarks
 
+## Release gate: recipe corpus v2
+
+The current release gate uses [`recipes.json`](recipes.json) and the public
+`BinaryPaper.Recovery.Corpus` test generator. It needs only this repository and the
+normal .NET dependencies. The generator accepts synthetic recipes, not user files,
+and is never included in the recovery executable.
+
+```powershell
+dotnet run --project benchmarks/BinaryPaper.Recovery.Corpus -c Release -- benchmarks/recipes.json artifacts/corpus
+dotnet publish cli/src/BinaryPaper.Recovery.Cli -c Release -r win-x64 --self-contained true -o artifacts/cli
+dotnet run --project benchmarks/BinaryPaper.Recovery.Benchmarks -c Release -- artifacts/corpus artifacts/cli/binarypaper.exe --output artifacts/results-win-x64.json
+```
+
+Use `linux-x64` or `osx-arm64` and `binarypaper` without `.exe` on those platforms.
+Choose a new corpus directory on each generation. The manifest pins every frame
+container and expected output; the harness verifies all output files and hashes.
+
+The numeric corners were selected from 292,698 accepted boundary candidates using
+production count arithmetic and codec selection: every even symbol length from 32
+through 2928 and integer redundancy percentage from 0 through 100. They cover source
+count, repair count, total count, symbol size, stored capacity, and both codec memory
+admission bounds. Several dimensions share a shape. The stored-capacity corner is
+42,467,328 bytes before packaging overhead, substantially beyond the older anchor cases.
+
+Unlike the historical measurements below, the new corpus removes source symbols:
+876 at the Reed–Solomon memory corner, and 6000 in the dedicated LDPC case. The
+generator checks that each LDPC erasure pattern is recoverable and records its actual
+decode stage and residual width. Additional cases cover encrypted recovery at the
+largest stored capacity using the profile's Argon2id cost, a 128 MiB decompressed
+output file, and 4096 entries with UTF-8 paths. Passwords are labelled public fixture values
+and enter the CLI through stdin; reports never include them.
+
+128 MiB and 4096 entries are explicit measurement points, not protocol ceilings:
+decompressed size and entry count have no universal finite profile maximum. The
+recipe manifest states the exact coverage instead of claiming exhaustive output sizes.
+Image conformance and network-disabled PNG/JPEG drills remain separate gates.
+
+The release workflow regenerates and measures this corpus on Windows x64, Linux x64,
+and macOS arm64. It verifies that all three generated manifests are byte-identical,
+retains their results, and includes them in the checksum manifest and build attestation.
+Each report pins the corpus and measured CLI hashes. Shared runner numbers describe
+that runner, not a minimum supported hardware specification.
+
+## Historical anchor measurements (all frames present)
+
+The original five-case corpus and tables below are retained as historical evidence.
+They supplied every frame, so they measure ingestion and intact recovery; they do not
+measure erasure reconstruction or establish the full supported writer envelope. That
+old generator required creator-side tooling. Use the public v2 generator above for
+new measurements.
+
 Small conformance vectors answer *"are the bytes and the rejection rules right?"*. These answer a
 different question: *"can an implementation recover everything the product actually writes, on an
 ordinary machine, without running out of memory?"*
@@ -64,9 +115,7 @@ so treat that as "not worse" rather than as a measured improvement.
 | `max-source-symbols` | Reed–Solomon | 16000 | 7 | 128 | 61 MiB | 0.3 | exact |
 | `max-repair-symbols` | LDPC | 2000 | 8192 | 128 | 56 MiB | 0.2 | exact |
 
-Every shape recovers byte-exact on Linux too, which is the result that matters — the same
-self-contained binary, built from the same source, restores the largest backup the product can
-write on a second platform.
+Every historical shape recovers byte-exact on Linux too, from a self-contained binary.
 
 Two honesty notes about that table. It was measured **in a container** on this Windows machine, so
 it is a real Linux kernel, a real glibc build, and a real .NET runtime, but not bare metal — treat
@@ -96,8 +145,8 @@ What the three tables establish together is the thing that matters: every shape 
 **byte-exact** on every platform, from the same source, with no platform-specific handling.
 | *baseline (3 frames)* | Reed–Solomon | 2 | 1 | 128 | *26 MiB* | *0.3* | *exact* |
 
-Every case recovers to **byte-exact** output. The largest supported backup restores in about five
-seconds.
+Every historical case recovers to **byte-exact** output. These timings apply to those
+intact anchor cases only.
 
 ## Reading the numbers honestly
 
@@ -147,7 +196,7 @@ sampling the resident set every 50 ms elsewhere. Each results file records which
 bound, whereas a high-water mark is not. **Compare `peakMethod` before comparing peaks across
 platforms** — otherwise you are comparing two different quantities.
 
-This repository's CI cannot produce these numbers: the corpus needs creator-side tooling that does
+The historical workflow could not produce these numbers here: its corpus needed creator-side tooling that does
 not exist here, and is too large to commit. They are produced elsewhere and the results file is
 committed by hand.
 

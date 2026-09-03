@@ -21,9 +21,7 @@ on:
         required: true
 
 permissions:
-  contents: write
-  id-token: write
-  attestations: write
+  contents: read
 
 jobs:
   verify:
@@ -44,6 +42,16 @@ jobs:
         run: |
           dotnet build cli/BinaryPaper.Recovery.slnx -c Release
           dotnet run --project cli/src/BinaryPaper.Recovery.Cli -c Release --no-build -- verify-vectors vectors
+
+      - name: Unit tests and fixture integrity
+        shell: pwsh
+        env:
+          BP_FUZZ_ITERATIONS: '200'
+        run: |
+          dotnet test cli/BinaryPaper.Recovery.slnx -c Release --no-build
+          if ($LASTEXITCODE -ne 0) { throw 'Tests failed' }
+          ./tools/verify-vector-integrity.ps1
+          ./tools/tests/release-dependencies.tests.ps1
 
       # A release whose changelog still says "Unreleased" tells every reader that nothing has
       # shipped, on the page announcing that something has. Cheap to forget, cheap to check.
@@ -78,10 +86,59 @@ jobs:
           BP_PRIVATE_REFERENCE_PATTERNS: ${{ secrets.PRIVATE_REFERENCE_PATTERNS }}
         run: ./tools/publication-audit.ps1
 
+  boundary:
+    name: boundary recovery (${{ matrix.rid }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, rid: linux-x64 }
+          - { os: windows-latest, rid: win-x64 }
+          - { os: macos-latest, rid: osx-arm64 }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Generate public boundary fixtures
+        run: dotnet run --project benchmarks/BinaryPaper.Recovery.Corpus -c Release -- benchmarks/recipes.json artifacts/corpus
+      - name: Build self-contained CLI
+        shell: pwsh
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+          TARGET_RID: ${{ matrix.rid }}
+        run: |
+          $version = if ($env:GITHUB_REF -like 'refs/tags/recovery-kit-v*') {
+            $env:GITHUB_REF -replace '^refs/tags/recovery-kit-v', ''
+          } else { $env:REQUESTED_VERSION }
+          dotnet publish cli/src/BinaryPaper.Recovery.Cli -c Release -r $env:TARGET_RID --self-contained true -p:Version=$version -o artifacts/cli
+          if ($LASTEXITCODE -ne 0) { throw 'Publish failed' }
+      - name: Measure exact recovery at the boundaries
+        shell: pwsh
+        run: |
+          $executable = if ($IsWindows) { 'artifacts/cli/binarypaper.exe' } else { 'artifacts/cli/binarypaper' }
+          dotnet run --project benchmarks/BinaryPaper.Recovery.Benchmarks -c Release -- artifacts/corpus $executable --output artifacts/boundary-${{ matrix.rid }}.json
+          if ($LASTEXITCODE -ne 0) { throw 'Boundary recovery failed' }
+      - name: Retain boundary evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boundary-${{ matrix.rid }}
+          path: |
+            artifacts/boundary-*.json
+            artifacts/corpus/corpus.json
+          if-no-files-found: error
+          retention-days: 30
+
   release:
     name: build and publish
     runs-on: ubuntu-latest
-    needs: verify
+    needs: [verify, boundary]
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@v5
         with:
@@ -98,24 +155,52 @@ jobs:
           $version = if ($env:GITHUB_REF -like 'refs/tags/recovery-kit-v*') {
             $env:GITHUB_REF -replace '^refs/tags/recovery-kit-v', ''
           } else {
-            '${{ github.event.inputs.version }}'
+            $env:REQUESTED_VERSION
           }
           "version=$version" >> $env:GITHUB_OUTPUT
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
 
       - name: Build artifacts
         shell: pwsh
-        run: ./tools/build-release.ps1 -Version '${{ steps.version.outputs.version }}' -OutputDirectory artifacts
+        run: ./tools/build-release.ps1 -Version $env:KIT_VERSION -OutputDirectory artifacts
+        env:
+          KIT_VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Download boundary evidence
+        uses: actions/download-artifact@v4
+        with:
+          pattern: boundary-*
+          path: boundary-evidence
+
+      - name: Confirm the public corpus is identical across runtimes
+        shell: pwsh
+        run: |
+          $manifests = @(Get-ChildItem boundary-evidence -Filter corpus.json -Recurse)
+          if ($manifests.Count -ne 3) { throw 'Missing boundary evidence' }
+          $hashes = @($manifests | ForEach-Object { (Get-FileHash $_.FullName -Algorithm SHA256).Hash } | Select-Object -Unique)
+          if ($hashes.Count -ne 1) { throw 'Corpus generation differed between platforms' }
+          Copy-Item $manifests[0].FullName artifacts/boundary-corpus.evidence.json
+          Get-ChildItem boundary-evidence -Filter 'boundary-*.json' -Recurse | ForEach-Object {
+            Copy-Item $_.FullName (Join-Path artifacts ($_.BaseName + '.evidence.json'))
+          }
 
       - name: Offline recovery drill against the built artifact
         shell: pwsh
         run: |
           $manifest = Get-Content vectors/1.0/positive/plaintext-text-note/manifest.json | ConvertFrom-Json
           $expected = $manifest.expected.outputs[0].sha256
-          ./tools/offline-drill.ps1 `
-            -ArtifactsDirectory artifacts `
-            -RuntimeIdentifier linux-x64 `
-            -ImagesDirectory vectors/1.0/images/image-multi-code-png `
-            -ExpectedSha256 $expected
+          foreach ($case in @('image-multi-code-png', 'image-jpeg')) {
+            & ./tools/offline-drill.ps1 -ArtifactsDirectory artifacts -RuntimeIdentifier linux-x64 `
+              -ImagesDirectory "vectors/1.0/images/$case" -ExpectedSha256 $expected `
+              -ReportPath "artifacts/offline-$case.evidence.json"
+            if ($LASTEXITCODE -ne 0) { throw "Offline drill failed for $case" }
+          }
+          # Evidence is part of the release: hash it before attesting the final manifest.
+          $lines = Get-ChildItem artifacts -File | Where-Object Name -ne SHA256SUMS | Sort-Object Name | ForEach-Object {
+            "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())  $($_.Name)"
+          }
+          $lines | Set-Content artifacts/SHA256SUMS -Encoding utf8NoBOM
 
       # Keyless build provenance, tied to this commit and this workflow. It lets someone verify that
       # an archive was produced here from this source, rather than trusting whoever handed it to
@@ -123,7 +208,16 @@ jobs:
       - name: Attest build provenance
         uses: actions/attest-build-provenance@v1
         with:
-          subject-path: 'artifacts/*.zip'
+          subject-path: 'artifacts/*'
+
+      - name: Retain complete release rehearsal
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recovery-kit-${{ steps.version.outputs.version }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/recovery-kit-v')
@@ -133,6 +227,7 @@ jobs:
             artifacts/*.zip
             artifacts/SHA256SUMS
             artifacts/*.spdx.json
+            artifacts/*.evidence.json
           body: |
             BinaryPaper Recovery Kit ${{ steps.version.outputs.version }}
 
