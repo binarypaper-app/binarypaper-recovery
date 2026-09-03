@@ -60,6 +60,19 @@ try {
         & (Join-Path $repoRoot 'tools/prepare-artifact.ps1') -Kind crash -Paths $large -Destination (Join-Path $scratch 'too-large')
     }
     if ($mockState.Calls -ne 2 -or (Test-Path (Join-Path $scratch 'too-large'))) { throw 'Large evidence reached inventory/copy' }
+    $duplicateDirectory = Join-Path $scratch 'duplicate'
+    New-Item -ItemType Directory -Path $duplicateDirectory | Out-Null
+    Copy-Item $inputPath $duplicateDirectory
+    MustRefuse 'ambiguous duplicate basenames' {
+        & (Join-Path $repoRoot 'tools/prepare-artifact.ps1') -Kind crash -Paths @($inputPath, $duplicateDirectory) -Destination (Join-Path $scratch 'duplicates')
+    }
+    $link = Join-Path $scratch 'linked'
+    $linkType = if ($IsWindows) { 'Junction' } else { 'SymbolicLink' }
+    New-Item -ItemType $linkType -Path $link -Target $duplicateDirectory | Out-Null
+    MustRefuse 'linked evidence directory' {
+        & (Join-Path $repoRoot 'tools/prepare-artifact.ps1') -Kind crash -Paths $link -Destination (Join-Path $scratch 'links')
+    }
+    Remove-Item -LiteralPath $link -Force
     $mockState.Fails = $true
     $env:GITHUB_OUTPUT = Join-Path $scratch 'refused-output'
     & (Join-Path $repoRoot 'tools/prepare-artifact.ps1') -Kind crash -Paths $inputPath -Destination (Join-Path $scratch 'unavailable') -Optional
