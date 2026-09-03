@@ -46,9 +46,6 @@ anything. Usually "none — conforming implementations already behave this way."
 
 *None.*
 
-Capsule Protocol 1.0 has not been released yet, so there is nothing to correct. While
-this specification is unreleased, defects are fixed in [SPEC.md](SPEC.md) directly and
-do not appear here.
-
-The first release will freeze the text; from that point every correction is recorded
-above.
+No erratum has been recorded against Capsule Protocol 1.0. The text was frozen at the
+`recovery-kit-v1.0.0` tag; from that point a defect is recorded above rather than being
+corrected in [SPEC.md](SPEC.md) directly.

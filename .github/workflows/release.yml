@@ -57,6 +57,19 @@ jobs:
             exit 1
           fi
 
+      # The changelog is not the only place that says whether anything has shipped. The README
+      # status line, the specification's own status banner, and the errata file each say the
+      # release has not happened, and each of them is wrong the moment a tag exists - on the
+      # specification whose meaning this tag freezes. Nothing was checking them.
+      - name: Release banners are flipped
+        if: startsWith(github.ref, 'refs/tags/recovery-kit-v')
+        shell: bash
+        run: |
+          if git grep -n -I -E 'Status: unreleased|[*][*]Unreleased[.][*][*]|has not been released yet' -- ':!CHANGELOG.md' ':!.github/'; then
+            echo "::error::The lines above still describe this release as unreleased. Flip them before tagging."
+            exit 1
+          fi
+
       # No -AllowMissingPatterns here, ever. This is the run that authorises publication, and it
       # must fail closed if the pattern list is absent.
       - name: Publication audit

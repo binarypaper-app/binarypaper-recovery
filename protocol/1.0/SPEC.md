@@ -13,7 +13,9 @@ same input, and rejects the same inputs, as any other conforming implementation.
 Once a version of this document is published under a release tag, its meaning is
 **frozen**. See [Compatibility and versioning](#14-compatibility-and-versioning).
 
-> **Unreleased.** No release has been tagged yet. Until one is, this text may change.
+> **Released.** This text is frozen at the `recovery-kit-v1.0.0` tag. A correction that
+> does not change behaviour is recorded in [ERRATA.md](ERRATA.md); anything that would
+> change behaviour requires a new protocol version.
 
 ## Conventions
 

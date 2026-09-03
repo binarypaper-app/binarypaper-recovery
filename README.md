@@ -8,8 +8,9 @@ everything needed to get the original bytes back out of those pages — the byte
 specification, machine-checkable conformance vectors, and a working recovery tool —
 under the Apache License 2.0.
 
-> **Status: unreleased.** This repository is being prepared and is not yet public. No
-> release has been tagged, and no compatibility promise is in force until one is. See
+> **Status: released.** Recovery kit 1.0.0 recovers capsule wire version 1.0. The
+> specification and conformance vectors carried by the `recovery-kit-v1.0.0` tag are
+> authoritative for that wire version, and its meanings do not change. See
 > [CHANGELOG.md](CHANGELOG.md).
 
 ## What this is for
