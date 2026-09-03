@@ -2,7 +2,7 @@
 
 > **Editorial note — vendored document.**
 > This file is a verbatim copy of the `ldpc-staircase-spec` specification, upstream version
-> 0.1.0, redistributed here under the Apache License 2.0. This banner is the only
+> 0.1.2, redistributed here under the Apache License 2.0. This banner is the only
 > addition; nothing below it has been altered.
 >
 > References below to a `vectors/` directory point at the **upstream project's** own
@@ -54,8 +54,9 @@ profile change requiring new vectors and a fresh IPR review.
 - Symbol index (ESI) `0..K-1` are the source symbols; `K..K+R-1` are the repair
   symbols. Repair symbol `p` in `0..R-1` has ESI `K + p`.
 - `N1` = the number of `1`s per source column in the left part of the parity check
-  matrix. Default profile value: **7**. Requires
-  `1 <= N1 <= R` when `R >= 1`.
+  matrix. Default profile value: **7**. Requires `N1 >= 1` always, and additionally
+  `N1 <= R` when `R >= 1`. `N1` is unused when `R = 0`, but a value below 1 is
+  meaningless rather than a no-op and MUST be rejected.
 - `seed` = the PRNG seed, a 32-bit unsigned integer in `[1, 0x7FFFFFFE]`.
 
 `(K, R, N1, seed)` fully determines the code. Two implementations given the same
@@ -211,9 +212,22 @@ Output: `R` repair symbols, each `S` bytes.
 ## 6. Decode
 
 Input: the `N` symbol slots and a present-mask marking which hold valid bytes. Any
-mix of source and repair symbols may be present. Decoding recovers as many missing
-**source** symbols as the received set determines. It is not required to reconstruct
-missing repair symbols.
+mix of source and repair symbols may be present. Decoding recovers every missing
+symbol the received set determines, and MUST report each one it recovered.
+
+Completion is judged on the **source** symbols alone (section 6.3): a decode is complete
+when all `K` of them are present, whatever became of the repair symbols. But recovering a
+missing repair symbol is not optional work a decoder may skip. Repair symbols are
+variables of the same equations, they fall out of the same solve at no extra cost, and the
+committed decode vectors record the total recovered count including them —
+`dec-all-repair-missing` loses only repair symbols and still requires a recovered count of
+`R`, so a decoder that stopped as soon as the source was complete would fail it.
+
+**At least one symbol MUST be present.** The symbol length `S` is not carried in the
+present-mask; it is read from a received symbol, so an entirely empty received set
+leaves `S` undefined and cannot describe a decode at all. An empty received set is a
+caller error rather than an incomplete decode, and an implementation MUST reject it
+instead of reporting a result. All present symbols MUST have the same length.
 
 Decoding runs in two stages and MUST NOT iterate between them.
 
@@ -274,12 +288,22 @@ used for conformance validation:
 - **decode** — the indices missing from the `N` symbols → the expected completion
   flag, the stage that was required (`NONE` / `PEELING` / `RESIDUAL_SOLVE`), the
   number of symbols recovered, and the source indices expected to remain missing.
-  Cases cover peeling-only, residual-solve, and expected-failure recoveries.
+  Cases cover peeling-only, residual-solve, and expected-failure recoveries. The
+  missing list is given inline as `missing`, or, for cases that lose more symbols
+  than a readable manifest can carry, as a `missingBlob` reference (section 7.2).
+  A case carries exactly one of the two.
 
 Symbol data is stored as raw `*.bin` files: one blob per part, holding that part's
 symbols concatenated in ascending ESI order at the case's fixed `S`. `MANIFEST.json`
 references every blob with its byte length and SHA-256 digest. Every implementation
 MUST reproduce all vectors byte-for-byte.
+
+The cases span both ends of the profile's range. Most are small enough to check by
+hand, which is what makes them precise about the algorithms. At least one matrix,
+encode, and decode case is also carried at the top of the calibrated envelope
+(`K = 16000`, `R = 8192`), where the matrix build draws six figures of PRNG values
+and the residual solve spans thousands of unknowns. An implementation can agree on
+every small case and still diverge there, so conformance requires both.
 
 ### 7.1 Canonical matrix serialization
 
@@ -292,6 +316,19 @@ for i = 0 .. R-1:
     u32  d                   // number of ones in row i
     u32  c  x d              // their column indices, strictly ascending
 ```
+
+### 7.2 Missing-index blobs
+
+A decode case whose `missing` list is impractical to inline references it as
+`missingBlob` instead. The blob is the bare index sequence, with no header:
+
+```
+u32  i  x (length / 4)       // missing symbol indices, strictly ascending
+```
+
+Indices are big-endian, strictly ascending, and each is below `N`. The count is the
+blob's byte length divided by four. A reader MUST accept both forms and treat them
+as equivalent.
 
 ## 8. Out of scope
 

@@ -3,10 +3,15 @@
 These are **verbatim copies** of two standalone, application-independent codec libraries,
 redistributed here under the Apache License 2.0.
 
-| Directory | Library | Implements |
-| --- | --- | --- |
-| `Erasure16/` | `erasure16-dotnet` | `erasure_alg = 1`, systematic Cauchy Reed–Solomon over GF(2¹⁶) |
-| `LdpcStaircase/` | `ldpc-staircase-dotnet` | `erasure_alg = 2`, systematic LDPC-Staircase over GF(2) |
+| Directory | Library | Upstream version | Implements |
+| --- | --- | --- | --- |
+| `Erasure16/` | `erasure16-dotnet` | 0.1.1 | `erasure_alg = 1`, systematic Cauchy Reed–Solomon over GF(2¹⁶) |
+| `LdpcStaircase/` | `ldpc-staircase-dotnet` | 0.1.3 | `erasure_alg = 2`, systematic LDPC-Staircase over GF(2) |
+
+The implementation and specification versions differ because they are separate projects
+with separate version lines: these sources are `erasure16-dotnet` 0.1.1 and
+`ldpc-staircase-dotnet` 0.1.3, which implement `erasure16-spec` 0.1.1 and
+`ldpc-staircase-spec` 0.1.2 respectively.
 
 ## Why they are copied rather than referenced
 

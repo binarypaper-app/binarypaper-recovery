@@ -30,8 +30,8 @@ by version and hash instead of copying them. That would not change any byte.
 
 | Document | Upstream project | Upstream version |
 | --- | --- | --- |
-| `erasure16.md` | `erasure16-spec` | 0.1.0 |
-| `ldpc-staircase.md` | `ldpc-staircase-spec` | 0.1.0 |
+| `erasure16.md` | `erasure16-spec` | 0.1.1 |
+| `ldpc-staircase.md` | `ldpc-staircase-spec` | 0.1.2 |
 
 Both are licensed under the Apache License 2.0, the same license as this repository.
 Their upstream copyright and attribution notices are preserved in

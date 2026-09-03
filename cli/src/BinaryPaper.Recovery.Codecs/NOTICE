@@ -1,12 +1,15 @@
-Vendored codec specifications
-============================
+Vendored codec source
+=====================
 
-The files erasure16.md and ldpc-staircase.md in this directory are verbatim copies
-of the normative specifications of two standalone, application-independent codec
-projects. Their upstream copyright and attribution notices follow.
+The .cs files under Erasure16/ and LdpcStaircase/ in this directory are verbatim
+copies of the reference implementations of two standalone, application-independent
+codec projects. Their upstream copyright and attribution notices follow.
+
+The normative specifications these implement are vendored separately, with their own
+notice, under protocol/1.0/codecs/.
 
 ----------------------------------------------------------------------
-erasure16 (erasure16.md), upstream version 0.1.0
+erasure16 (Erasure16/), upstream erasure16-dotnet version 0.1.1
 ----------------------------------------------------------------------
 
 Copyright 2026 barrrssss
@@ -24,7 +27,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 ----------------------------------------------------------------------
-ldpc-staircase (ldpc-staircase.md), upstream version 0.1.0
+ldpc-staircase (LdpcStaircase/), upstream ldpc-staircase-dotnet version 0.1.3
 ----------------------------------------------------------------------
 
 Copyright 2026 barrrssss

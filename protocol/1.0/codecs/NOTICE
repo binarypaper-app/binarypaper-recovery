@@ -6,7 +6,7 @@ of the normative specifications of two standalone, application-independent codec
 projects. Their upstream copyright and attribution notices follow.
 
 ----------------------------------------------------------------------
-erasure16 (erasure16.md), upstream version 0.1.0
+erasure16 (erasure16.md), upstream version 0.1.1
 ----------------------------------------------------------------------
 
 Copyright 2026 barrrssss
@@ -24,7 +24,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 ----------------------------------------------------------------------
-ldpc-staircase (ldpc-staircase.md), upstream version 0.1.0
+ldpc-staircase (ldpc-staircase.md), upstream version 0.1.2
 ----------------------------------------------------------------------
 
 Copyright 2026 barrrssss

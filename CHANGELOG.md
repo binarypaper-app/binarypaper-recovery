@@ -27,6 +27,12 @@ its meanings do not change.
   with the required reader behaviour, the validation order, the stable failure categories,
   and the threat model in `SECURITY-CONSIDERATIONS.md`. `protocol/registries/` pins the
   algorithm and recovery-profile identifiers.
+- **The two erasure codes it depends on, carried in full.** `protocol/1.0/codecs/` vendors the
+  normative `erasure16` 0.1.1 and `ldpc-staircase` 0.1.2 specifications, and
+  `cli/src/BinaryPaper.Recovery.Codecs/` vendors the `erasure16-dotnet` 0.1.1 and
+  `ldpc-staircase-dotnet` 0.1.3 reference implementations, both verbatim and under Apache-2.0
+  with attribution intact. Those projects are not published yet, and a recovery promise that
+  depends on a document or a package you cannot obtain is not a recovery promise.
 - **The conformance suite.** 54 machine-checkable vectors — 7 positive, 40 negative, 5
   image and 2 image-negative — each with a manifest, all hash-pinned from a single
   aggregate `MANIFEST.json`.
