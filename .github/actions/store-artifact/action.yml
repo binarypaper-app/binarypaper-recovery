@@ -1,0 +1,41 @@
+name: Store bounded evidence
+description: Admit an explicit file set against byte, retention, and repository storage limits.
+inputs:
+  kind:
+    description: crash, dump, boundary, or release
+    required: true
+  name:
+    description: Artifact name
+    required: true
+  paths:
+    description: Newline-separated file patterns or evidence directories
+    required: true
+  optional:
+    description: Refuse optional diagnostics without masking the original test failure
+    default: 'false'
+  token:
+    description: Token with actions read permission for the artifact inventory
+    required: true
+runs:
+  using: composite
+  steps:
+    - id: gate
+      if: always()
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        EVIDENCE_KIND: ${{ inputs.kind }}
+        EVIDENCE_PATHS: ${{ inputs.paths }}
+        EVIDENCE_OPTIONAL: ${{ inputs.optional }}
+      run: |
+        $destination = Join-Path $env:RUNNER_TEMP ('bp-evidence-' + [guid]::NewGuid().ToString('n'))
+        & ./tools/prepare-artifact.ps1 -Kind $env:EVIDENCE_KIND -Paths $env:EVIDENCE_PATHS `
+          -Destination $destination -Optional:($env:EVIDENCE_OPTIONAL -eq 'true')
+    - uses: actions/upload-artifact@v4
+      if: always() && steps.gate.outputs.allowed == 'true'
+      with:
+        name: ${{ inputs.name }}
+        path: ${{ steps.gate.outputs.path }}/
+        if-no-files-found: error
+        retention-days: 1
+        compression-level: 0

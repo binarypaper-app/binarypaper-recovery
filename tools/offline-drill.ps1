@@ -121,11 +121,21 @@ try {
     # Pull first: no network is available once the recovery process starts.
     docker pull $ContainerImage | Out-Host
     if ($LASTEXITCODE -ne 0) { throw 'Docker could not obtain the isolated runtime environment' }
+    $identityArgs = @()
+    if ($IsLinux) {
+        # With all capabilities dropped, container root cannot bypass a runner-owned bind mount.
+        # Use the directory owner's identity instead of widening host permissions or capabilities.
+        $drillUid = & id -u
+        if ($LASTEXITCODE -ne 0) { throw 'Could not read the host UID' }
+        $drillGid = & id -g
+        if ($LASTEXITCODE -ne 0) { throw 'Could not read the host GID' }
+        $identityArgs = @('--user', "${drillUid}:${drillGid}")
+    }
     $containerId = docker create --network none --read-only --cap-drop ALL `
         --security-opt no-new-privileges --pids-limit 128 --memory 2g `
         --env DOTNET_BUNDLE_EXTRACT_BASE_DIR=/tmp/dotnet-bundle `
         --tmpfs /tmp:rw,exec,size=512m --mount "type=bind,source=$scratch,target=/drill" `
-        --workdir /drill --entrypoint /bin/sh $ContainerImage -c `
+        @identityArgs --workdir /drill --entrypoint /bin/sh $ContainerImage -c `
         'test -d /sys/class/net/lo || exit 97; for interface in /sys/class/net/*; do if [ -d "$interface" ] && [ "${interface##*/}" != lo ]; then exit 97; fi; done; chmod +x /drill/tool/binarypaper; /drill/tool/binarypaper --version; exec /drill/tool/binarypaper recover /drill/pages --output /drill/recovered'
     if ($LASTEXITCODE -ne 0) { throw 'Docker could not create the isolated recovery process' }
     $isolation = docker inspect $containerId --format '{{.HostConfig.NetworkMode}}'

@@ -22,6 +22,11 @@ on:
 
 permissions:
   contents: read
+  actions: read
+
+concurrency:
+  group: recovery-artifact-storage
+  cancel-in-progress: false
 
 jobs:
   verify:
@@ -52,6 +57,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Tests failed' }
           ./tools/verify-vector-integrity.ps1
           ./tools/tests/release-dependencies.tests.ps1
+          ./tools/tests/artifact-policy.tests.ps1
 
       # A release whose changelog still says "Unreleased" tells every reader that nothing has
       # shipped, on the page announcing that something has. Cheap to forget, cheap to check.
@@ -122,14 +128,14 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Boundary recovery failed' }
       - name: Retain boundary evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: ./.github/actions/store-artifact
         with:
-          name: boundary-${{ matrix.rid }}
-          path: |
+          kind: boundary
+          name: boundary-${{ github.run_attempt }}-${{ matrix.rid }}
+          paths: |
             artifacts/boundary-*.json
             artifacts/corpus/corpus.json
-          if-no-files-found: error
-          retention-days: 30
+          token: ${{ github.token }}
 
   release:
     name: build and publish
@@ -137,6 +143,7 @@ jobs:
     needs: [verify, boundary]
     permissions:
       contents: write
+      actions: read
       id-token: write
       attestations: write
     steps:
@@ -170,7 +177,7 @@ jobs:
       - name: Download boundary evidence
         uses: actions/download-artifact@v4
         with:
-          pattern: boundary-*
+          pattern: boundary-${{ github.run_attempt }}-*
           path: boundary-evidence
 
       - name: Confirm the public corpus is identical across runtimes
@@ -212,12 +219,16 @@ jobs:
 
       - name: Retain complete release rehearsal
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: ./.github/actions/store-artifact
         with:
-          name: recovery-kit-${{ steps.version.outputs.version }}
-          path: artifacts/
-          if-no-files-found: error
-          retention-days: 30
+          kind: release
+          name: recovery-kit-${{ steps.version.outputs.version }}-${{ github.run_attempt }}
+          paths: |
+            artifacts/*.zip
+            artifacts/SHA256SUMS
+            artifacts/*.spdx.json
+            artifacts/*.evidence.json
+          token: ${{ github.token }}
 
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/recovery-kit-v')

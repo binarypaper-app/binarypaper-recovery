@@ -14,6 +14,8 @@ dotnet test cli/BinaryPaper.Recovery.slnx
 dotnet run --project cli/src/BinaryPaper.Recovery.Cli -- --help
 ```
 
+For failed fuzz tests, see [crash diagnostics and Actions storage limits](../docs/crash-diagnostics.md).
+
 Requires the .NET 10 SDK. No private feed, no private path, no network access at build
 or run time.
 

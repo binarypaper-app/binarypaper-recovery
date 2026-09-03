@@ -17,9 +17,29 @@ on:
     # Nightly, for the long fuzz run.
     - cron: '17 3 * * *'
   workflow_dispatch:
+    inputs:
+      dump_type:
+        description: 'Optional crash dump (uploads limited to 64 MiB; larger dumps require local debugging)'
+        type: choice
+        options: [none, mini, full]
+        default: none
+      dump_platform:
+        description: 'Only this platform may collect a requested dump'
+        type: choice
+        options: [windows-latest, ubuntu-latest, macos-latest]
+        default: windows-latest
+      fuzz_iterations:
+        description: 'Mutations per target (1–10000); replay a checkpoint with iteration + 1'
+        default: '600'
+
+# Release uses the same group. Do not overlap independent artifact-budget reservations.
+concurrency:
+  group: recovery-artifact-storage
+  cancel-in-progress: false
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   # Which platforms this run covers. A pull request is a fast signal; `main` and the nightly run
@@ -32,18 +52,23 @@ jobs:
       fuzz-iterations: ${{ steps.pick.outputs.fuzz-iterations }}
     steps:
       - id: pick
-        shell: bash
+        shell: pwsh
+        env:
+          REQUESTED_ITERATIONS: ${{ inputs.fuzz_iterations }}
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo 'platforms=["ubuntu-latest"]' >> "$GITHUB_OUTPUT"
-            echo 'fuzz-iterations=200' >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event_name }}" = "schedule" ]; then
-            echo 'platforms=["ubuntu-latest","windows-latest","macos-latest"]' >> "$GITHUB_OUTPUT"
-            echo 'fuzz-iterations=3000' >> "$GITHUB_OUTPUT"
-          else
-            echo 'platforms=["ubuntu-latest","windows-latest","macos-latest"]' >> "$GITHUB_OUTPUT"
-            echo 'fuzz-iterations=600' >> "$GITHUB_OUTPUT"
-          fi
+          $platforms = '["ubuntu-latest","windows-latest","macos-latest"]'
+          $iterations = 600
+          if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
+            $platforms = '["ubuntu-latest"]'; $iterations = 200
+          } elseif ($env:GITHUB_EVENT_NAME -eq 'schedule') {
+            $iterations = 3000
+          } elseif ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') {
+            if (-not [int]::TryParse($env:REQUESTED_ITERATIONS, [ref]$iterations) -or $iterations -lt 1 -or $iterations -gt 10000) {
+              throw 'fuzz_iterations must be an integer from 1 to 10000'
+            }
+          }
+          "platforms=$platforms" >> $env:GITHUB_OUTPUT
+          "fuzz-iterations=$iterations" >> $env:GITHUB_OUTPUT
 
   test:
     name: test (${{ matrix.os }})
@@ -64,7 +89,7 @@ jobs:
       - name: Build
         run: dotnet build cli/BinaryPaper.Recovery.slnx -c Release
 
-      # --blame-crash leaves a sequence file naming a managed test if its host terminates.
+      # Sequence metadata is enough by default; do not automatically collect full memory dumps.
       - name: Unit and fuzz tests
         env:
           # The seed is fixed, so a short run is a prefix of the long one: it explores nothing the
@@ -72,7 +97,7 @@ jobs:
           BP_FUZZ_ITERATIONS: ${{ needs.scope.outputs.fuzz-iterations }}
         run: >
           dotnet test cli/BinaryPaper.Recovery.slnx -c Release --no-build
-          --blame-crash
+          --blame
           --results-directory artifacts/test-results
           --filter "FullyQualifiedName!~ImageDecodingSurvivesArbitraryMutation"
 
@@ -81,7 +106,9 @@ jobs:
 
       - name: Vector manifest integrity
         shell: pwsh
-        run: ./tools/verify-vector-integrity.ps1
+        run: |
+          ./tools/verify-vector-integrity.ps1
+          ./tools/tests/artifact-policy.tests.ps1
 
   # The native image target gets its own job. A native crash is still a real red signal, but it
   # cannot hide the conformance checks above or prevent the independent offline archive drill.
@@ -105,28 +132,50 @@ jobs:
         run: dotnet build cli/test/BinaryPaper.Recovery.FuzzTests -c Release
 
       - name: Image fuzz target
+        shell: pwsh
         env:
           BP_FUZZ_ITERATIONS: ${{ needs.scope.outputs.fuzz-iterations }}
+          REQUESTED_DUMP: ${{ inputs.dump_type }}
+          DUMP_PLATFORM: ${{ inputs.dump_platform }}
+          CURRENT_PLATFORM: ${{ matrix.os }}
           # Absolute, and rooted at the workspace: dotnet test resolves a relative path from
           # the test host's working directory, which is under the build output tree, while
           # upload-artifact looks in the workspace. A crash would leave the evidence unreachable.
           BP_FUZZ_CHECKPOINT: ${{ github.workspace }}/artifacts/fuzz/image-fuzz-checkpoint.json
-        run: >
-          dotnet test cli/test/BinaryPaper.Recovery.FuzzTests -c Release --no-build
-          --blame-crash
-          --results-directory artifacts/test-results
-          --filter "FullyQualifiedName~ImageDecodingSurvivesArbitraryMutation"
+        run: |
+          $dumpArgs = @('--blame')
+          if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch' -and $env:CURRENT_PLATFORM -eq $env:DUMP_PLATFORM -and $env:REQUESTED_DUMP -in @('mini', 'full')) {
+            $dumpArgs = @('--blame-crash', '--blame-crash-dump-type', $env:REQUESTED_DUMP)
+          }
+          dotnet test cli/test/BinaryPaper.Recovery.FuzzTests -c Release --no-build @dumpArgs --results-directory artifacts/test-results --filter 'FullyQualifiedName~ImageDecodingSurvivesArbitraryMutation'
+          if ($LASTEXITCODE -ne 0) { throw 'Image fuzz test failed; see crash reproduction metadata below' }
+
+      - name: Print replay details and prepare compact evidence
+        if: failure()
+        shell: pwsh
+        env:
+          BP_FUZZ_ITERATIONS: ${{ needs.scope.outputs.fuzz-iterations }}
+        run: ./tools/prepare-crash-evidence.ps1
 
       - name: Keep compact crash evidence
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: ./.github/actions/store-artifact
         with:
-          name: image-fuzz-evidence-${{ matrix.os }}
-          path: |
-            artifacts/fuzz
-            artifacts/test-results/**/Sequence_*.xml
-          if-no-files-found: ignore
-          retention-days: 14
+          kind: crash
+          name: image-fuzz-evidence-${{ matrix.os }}-${{ github.run_attempt }}
+          paths: artifacts/crash-evidence
+          optional: 'true'
+          token: ${{ github.token }}
+
+      - name: Keep explicitly requested bounded dump
+        if: failure() && github.event_name == 'workflow_dispatch' && inputs.dump_type != 'none' && matrix.os == inputs.dump_platform
+        uses: ./.github/actions/store-artifact
+        with:
+          kind: dump
+          name: image-fuzz-dump-${{ matrix.os }}-${{ github.run_attempt }}
+          paths: artifacts/test-results
+          optional: 'true'
+          token: ${{ github.token }}
 
   audit:
     name: publication audit

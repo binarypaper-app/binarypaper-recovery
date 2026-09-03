@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Security.Cryptography;
 using System.Text.Json;
 using BinaryPaper.Recovery;
 using BinaryPaper.Recovery.Images;
@@ -109,6 +110,16 @@ public sealed class FuzzTests(ITestOutputHelper output)
         // slack for a loaded machine before the harness calls it a runaway.
         var reader = new PageImageReader(new ImagePolicy { MaxDuration = Budget - TimeSpan.FromSeconds(10) });
 
+        string? replayInput = Environment.GetEnvironmentVariable("BP_FUZZ_REPLAY_INPUT");
+        if (!string.IsNullOrEmpty(replayInput))
+        {
+            byte[] bytes = File.ReadAllBytes(replayInput);
+            output.WriteLine($"Replaying {bytes.Length} bytes, SHA256 {Convert.ToHexString(SHA256.HashData(bytes))}");
+            PageImageResult result = reader.Read("fuzz", bytes);
+            Assert.True(result.Failure is not null || result.Symbols.Count > 0);
+            return;
+        }
+
         // The image reader is contractually total: it reports failures on the result rather than
         // throwing, so that one bad page never discards frames recovered from other pages. The
         // property here is that the contract actually holds under mutation.
@@ -150,13 +161,16 @@ public sealed class FuzzTests(ITestOutputHelper output)
         int rejected = 0;
         int accepted = 0;
         var slowest = TimeSpan.Zero;
+        // Fingerprint ordered corpus bytes so replay can detect an incompatible corpus/runtime.
+        string corpusHash = Convert.ToHexString(SHA256.HashData(
+            System.Text.Encoding.UTF8.GetBytes(string.Join("\n", corpus.Select(b => Convert.ToHexString(SHA256.HashData(b)))))));
 
         for (int i = 0; i < Iterations; i++)
         {
             byte[] input = Mutate(random, corpus[random.Next(corpus.Length)]);
             var stopwatch = Stopwatch.StartNew();
 
-            WriteCheckpoint(checkpointPath, name, i, input);
+            WriteCheckpoint(checkpointPath, name, i, input, corpusHash);
 
             try
             {
@@ -199,6 +213,7 @@ public sealed class FuzzTests(ITestOutputHelper output)
             // The same resolution WriteCheckpoint used, so a completed run cannot leave a stale
             // checkpoint behind for the next failure to be blamed on.
             File.Delete(Path.GetFullPath(checkpointPath));
+            File.Delete(Path.GetFullPath(checkpointPath) + ".input.bin");
         }
 
         if (!allowSuccess)
@@ -210,7 +225,7 @@ public sealed class FuzzTests(ITestOutputHelper output)
         }
     }
 
-    private static void WriteCheckpoint(string? path, string target, int iteration, byte[] input)
+    private static void WriteCheckpoint(string? path, string target, int iteration, byte[] input, string corpusHash)
     {
         if (path is null)
         {
@@ -219,12 +234,20 @@ public sealed class FuzzTests(ITestOutputHelper output)
 
         string fullPath = Path.GetFullPath(path);
         Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
+        // Keep one bounded synthetic input, never the entire mutation history or process memory.
+        bool inputSaved = input.Length <= 512 * 1024;
+        if (inputSaved) { File.WriteAllBytes(fullPath + ".input.bin", input); }
+        else { File.Delete(fullPath + ".input.bin"); }
         File.WriteAllText(fullPath, JsonSerializer.Serialize(new
         {
             target,
             seed = Seed,
             iteration,
             inputLength = input.Length,
+            inputSha256 = Convert.ToHexString(SHA256.HashData(input)),
+            corpusSha256 = corpusHash,
+            runtime = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription,
+            inputSaved,
             prefix = Preview(input),
         }));
     }
