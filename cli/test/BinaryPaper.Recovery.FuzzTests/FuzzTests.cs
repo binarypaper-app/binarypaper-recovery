@@ -236,9 +236,14 @@ public sealed class FuzzTests(ITestOutputHelper output)
         Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
         // Keep one bounded synthetic input, never the entire mutation history or process memory.
         bool inputSaved = input.Length <= 512 * 1024;
-        if (inputSaved) { File.WriteAllBytes(fullPath + ".input.bin", input); }
+        if (inputSaved)
+        {
+            File.WriteAllBytes(fullPath + ".input.bin.tmp", input);
+            File.Move(fullPath + ".input.bin.tmp", fullPath + ".input.bin", overwrite: true);
+        }
         else { File.Delete(fullPath + ".input.bin"); }
-        File.WriteAllText(fullPath, JsonSerializer.Serialize(new
+        // A crash during checkpoint I/O must leave the previous complete JSON readable.
+        File.WriteAllText(fullPath + ".tmp", JsonSerializer.Serialize(new
         {
             target,
             seed = Seed,
@@ -250,6 +255,7 @@ public sealed class FuzzTests(ITestOutputHelper output)
             inputSaved,
             prefix = Preview(input),
         }));
+        File.Move(fullPath + ".tmp", fullPath, overwrite: true);
     }
 
     /// <summary>
