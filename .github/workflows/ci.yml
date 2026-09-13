@@ -6,8 +6,15 @@ name: CI
 # promise.
 #
 # Three platforms is also the expensive part, so it runs where it earns its keep. A pull request
-# gets Linux and a short fuzz pass; `main` gets the full matrix; the full fuzz corpus runs nightly,
-# where minutes are cheap and nobody is waiting.
+# gets Linux and a short fuzz pass; `main` gets the full matrix with the short fuzz pass; the full
+# fuzz corpus runs nightly on Linux, where nobody is waiting.
+#
+# Minutes are not free while this repository is private: hosted macOS bills at ten times the Linux
+# rate and Windows at twice, against a fixed monthly allowance. Two rules keep the nightly inside
+# that allowance. The long fuzz run stays on Linux, because the mutation engine is the same managed
+# code everywhere and the platform-specific native decoder still gets the short pass on every push
+# to `main`. And a nightly on a tree that has not changed since the last successful nightly is
+# skipped outright: the seed is fixed, so it would replay yesterday's mutations byte for byte.
 
 on:
   push:
@@ -42,37 +49,56 @@ permissions:
   actions: read
 
 jobs:
-  # Which platforms this run covers. A pull request is a fast signal; `main` and the nightly run
-  # are the thorough ones.
+  # Which platforms this run covers, and whether it runs at all. A pull request is a fast signal;
+  # `main` and the nightly run are the thorough ones.
   scope:
     name: scope
     runs-on: ubuntu-latest
     outputs:
+      run: ${{ steps.pick.outputs.run }}
       platforms: ${{ steps.pick.outputs.platforms }}
+      fuzz-platforms: ${{ steps.pick.outputs.fuzz-platforms }}
       fuzz-iterations: ${{ steps.pick.outputs.fuzz-iterations }}
     steps:
       - id: pick
         shell: pwsh
         env:
           REQUESTED_ITERATIONS: ${{ inputs.fuzz_iterations }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          $platforms = '["ubuntu-latest","windows-latest","macos-latest"]'
+          $run = 'true'
+          $all = '["ubuntu-latest","windows-latest","macos-latest"]'
+          $linux = '["ubuntu-latest"]'
+          $platforms = $all
+          $fuzzPlatforms = $all
           $iterations = 600
           if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
-            $platforms = '["ubuntu-latest"]'; $iterations = 200
+            $platforms = $linux; $fuzzPlatforms = $linux; $iterations = 200
           } elseif ($env:GITHUB_EVENT_NAME -eq 'schedule') {
-            $iterations = 3000
+            $fuzzPlatforms = $linux; $iterations = 3000
+            # The nightly earns its minutes only on a tree the previous nightly has not seen. With a
+            # fixed seed, the same commit produces the same mutations, so a repeat proves nothing.
+            # Only a successful nightly counts: a failed or refused one has not covered the tree.
+            $last = gh api "repos/$env:GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?event=schedule&status=success&per_page=1" --jq '.workflow_runs[0].head_sha'
+            if ($LASTEXITCODE -ne 0) { throw 'Could not read the previous nightly run' }
+            if ($last -eq $env:GITHUB_SHA) {
+              $run = 'false'
+              "Nightly skipped: $env:GITHUB_SHA already passed a nightly run and nothing has changed since." >> $env:GITHUB_STEP_SUMMARY
+            }
           } elseif ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') {
             if (-not [int]::TryParse($env:REQUESTED_ITERATIONS, [ref]$iterations) -or $iterations -lt 1 -or $iterations -gt 10000) {
               throw 'fuzz_iterations must be an integer from 1 to 10000'
             }
           }
+          "run=$run" >> $env:GITHUB_OUTPUT
           "platforms=$platforms" >> $env:GITHUB_OUTPUT
+          "fuzz-platforms=$fuzzPlatforms" >> $env:GITHUB_OUTPUT
           "fuzz-iterations=$iterations" >> $env:GITHUB_OUTPUT
 
   test:
     name: test (${{ matrix.os }})
     needs: scope
+    if: needs.scope.outputs.run == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -115,11 +141,12 @@ jobs:
   image-fuzz:
     name: image fuzz (${{ matrix.os }})
     needs: scope
+    if: needs.scope.outputs.run == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ fromJSON(needs.scope.outputs.platforms) }}
+        os: ${{ fromJSON(needs.scope.outputs.fuzz-platforms) }}
 
     steps:
       - uses: actions/checkout@v5
@@ -179,6 +206,8 @@ jobs:
 
   audit:
     name: publication audit
+    needs: scope
+    if: needs.scope.outputs.run == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
