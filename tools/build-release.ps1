@@ -129,7 +129,9 @@ try {
             "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())  $($_.Name)"
         }
 
-    Set-Content -Path $sums -Value $lines -Encoding utf8NoBOM
+    # LF endings on every host. Set-Content would write CRLF on Windows, and `sha256sum -c`
+    # (GNU and BusyBox alike) then reads each filename with a trailing CR and fails every line.
+    [IO.File]::WriteAllText($sums, (($lines -join "`n") + "`n"), [Text.UTF8Encoding]::new($false))
     Write-Host "    $($lines.Count) artifact(s) hashed"
 
     Write-Host "`n$('=' * 60)"

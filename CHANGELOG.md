@@ -99,3 +99,11 @@ its meanings do not change.
   `ZXingCpp` ships native assets for `win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`,
   `osx-x64` and `osx-arm64`. Those are the six platforms the kit publishes; anywhere else
   you must build zxing-cpp yourself, or work from the specification.
+
+### Release record
+
+- `SHA256SUMS` was replaced on 2026-09-25, before the repository was made public. The
+  original upload had Windows line endings because the release was assembled on Windows, so
+  `sha256sum -c SHA256SUMS` failed on every line. The replacement has the same eight hashes
+  with LF endings. No archive, SBOM or evidence file changed, and `tools/build-release.ps1`
+  now writes LF on every host.
