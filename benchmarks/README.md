@@ -267,3 +267,40 @@ counts and timings for one build on one machine, and a stale file of those is wo
 Numbers vary enormously with capture quality, and that is the finding rather than a nuisance: on a
 corpus where the sweep already reads the page, rectification adds nothing at roughly eight times
 the cost; on one where the sweep falls short, it is the difference between recovering and not.
+
+## Dense pages, 2026-09-30
+
+A full sheet of equal-size codes a few modules apart used to read few or no codes, because failed
+candidate detections filled the decoder's result cap before the real codes were tried (see
+`cli/README.md`, "How a page is read"). The committed evidence is the `image-dense-page-png`
+conformance vector; the table below adds clean renders of real sheets: A4, 26 mm codes, version
+26, ECC M, six-module gaps, rasterised by two PDF renderers at the resolutions shown. The last
+four rows are the photograph corpus above, where the fix must change nothing.
+
+Codes decoded / CPU seconds for one page, lower of two runs, Windows x64, .NET 10, on a machine
+under unrelated load (CPU time is reported because wall time varied several-fold between runs).
+"Sweep" is the whole-page stage alone; "full" adds the closer look.
+
+| Page | Codes on it | Before: sweep | Before: full | After: sweep | After: full |
+| --- | ---: | --- | --- | --- | --- |
+| 63-code sheet, renderer A, 300 dpi | 63 | 0 / 0.4 | 10 / 41.0 | **63** / 0.4 | 63 / 2.5 |
+| 63-code sheet, renderer A, 600 dpi | 63 | 0 / 2.1 | 0 / 2.3 | **63** / 1.5 | 63 / 2.8 |
+| 63-code sheet, renderer B, 375 dpi | 63 | 0 / 0.6 | 10 / 35.0 | **63** / 0.8 | 63 / 2.9 |
+| 63-code sheet, renderer B, 750 dpi | 63 | 0 / 2.4 | 0 / 2.4 | **63** / 2.7 | 63 / 4.1 |
+| 39-code sheet, renderer A, 300 dpi | 39 | 18 / 0.4 | 26 / 29.0 | **39** / 0.3 | 39 / 1.0 |
+| 39-code sheet, renderer A, 600 dpi | 39 | 22 / 1.2 | 26 / 28.5 | **39** / 1.3 | 39 / 2.2 |
+| 39-code sheet, renderer B, 375 dpi | 39 | 19 / 0.6 | 25 / 29.9 | **39** / 0.7 | 39 / 3.4 |
+| 39-code sheet, renderer B, 750 dpi | 39 | 22 / 2.2 | 23 / 44.0 | **39** / 2.4 | 39 / 3.5 |
+| 14-code last page, renderer A, 300 dpi | 14 | 14 / 0.4 | 14 / 22.1 | 14 / 0.3 | 14 / **0.5** |
+| 14-code last page, renderer B, 375 dpi | 14 | 14 / 0.6 | 14 / 18.5 | 14 / 0.6 | 14 / **3.2** |
+| `image-dense-page-png` | 66 | 0 / 0.4 | 0 / 0.4 | **66** / 0.6 | 66 / 1.7 |
+| `page-corpus/20260830_200949.jpg` | — | 9 / 0.6 | 9 / 3.6 | 9 / 0.6 | 9 / 4.0 |
+| `page-corpus/20260830_201021.jpg` | — | 9 / 0.5 | 9 / 1.6 | 9 / 0.6 | 9 / 2.0 |
+| `page-corpus/20260830_201041.jpg` | — | 9 / 0.5 | 10 / 2.8 | 9 / 0.5 | 10 / 3.1 |
+| `page-corpus/20260830_202509.jpg` | — | 9 / 0.5 | 10 / 6.0 | 9 / 0.6 | 10 / 6.4 |
+
+Where a page read before, it returns the identical set of payloads after (compared by hash, not
+count). On the photographs the closer look costs about 0.3 seconds more, which is the extra
+clean-only read made whenever the locating read reports a failed detection; it found nothing new
+there, and is kept because on a dense photograph it is the read that is not crowded out. On clean
+pages the closer look drops from 20-44 seconds to 1-4, because it no longer rectifies blank margin.
