@@ -11,6 +11,37 @@ version it recovers.
 Release tags and assets are immutable. A superseded release is marked here; it is
 never replaced or deleted.
 
+## [Unreleased]
+
+Still recovers **capsule wire version 1.0**. No wire meaning changes.
+
+### Fixed
+
+- **A full, densely packed page image read few or no codes.** A clean rendering of an A4
+  sheet of 63 version-26 codes six modules apart decoded 0 codes in the sweep and 10 after
+  the closer look; a 39-code sheet decoded 18. On such a lattice the corner markers of
+  neighbouring codes form many false candidate triples. The sweep asked the decoder to
+  report failed candidates too, and those filled its 64-result limit before the real codes
+  were tried. The sweep now asks only for clean decodes, under the decoder's full
+  255-result limit; the closer look, which needs the located-but-unread positions, makes
+  that read in addition to the locating one whenever the locating read reports a failure.
+  Both sheets now read completely in the sweep alone. Every page that already read
+  returns the same codes as before.
+- **The closer look spent seconds per blank position.** Neighbour prediction walked off
+  the edge of the code lattice into the page margin, and each blank position paid the
+  whole rectify-and-retry ladder to find nothing, so a page the sweep had already read out
+  could still take tens of seconds, or its whole time budget. A predicted position whose
+  texture is under a quarter of the decoded code that predicted it is now passed over.
+  Located positions are always tried, and no code in the page corpus or the image vectors
+  is lost.
+
+### Added
+
+- `image-dense-page-png`, an image conformance vector: 66 same-size codes packed seven to
+  a row, six modules apart. A reader implementing image decoding must decode all of them.
+  The generator refuses to write it unless a capped read that reports failed candidates
+  falls short on it, so the fixture is guaranteed to exercise the hazard.
+
 ## [recovery-kit-v1.0.0]
 
 The first release. Recovers **capsule wire version 1.0** (`format_major = 1`,

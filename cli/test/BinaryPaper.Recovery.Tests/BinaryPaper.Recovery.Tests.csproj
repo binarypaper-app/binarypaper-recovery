@@ -20,6 +20,7 @@
     <!-- Shared with the image-vector generator rather than copied: two PNG encoders that drift
          apart would make a failure here mean nothing. -->
     <Compile Include="..\BinaryPaper.Recovery.ImageVectors\PngWriter.cs" Link="PngWriter.cs" />
+    <Compile Include="..\BinaryPaper.Recovery.ImageVectors\DensePageRenderer.cs" Link="DensePageRenderer.cs" />
   </ItemGroup>
 
   <ItemGroup>

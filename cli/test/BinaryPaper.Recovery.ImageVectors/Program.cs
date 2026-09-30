@@ -64,6 +64,13 @@ written += WriteSinglePage(
     Path.Combine(vectorsRoot, "1.0", "positive", "plaintext-text-note"),
     ImageFormat.Jpeg, rotationQuarterTurns: 0, allOnOnePage: true);
 
+written += WriteDensePage(
+    "image-dense-page-png",
+    "A full sheet of equal-size codes packed as tightly as a printed page. A whole-page read "
+        + "must decode every one of them, however many candidate finder patterns the lattice offers.",
+    Path.Combine(vectorsRoot, "1.0", "positive"),
+    Path.Combine(vectorsRoot, "1.0", "negative"));
+
 // ---------------------------------------------------------------- image negatives
 //
 // These pin behaviour a positive vector cannot: what happens when a page is partly unreadable, and
@@ -249,6 +256,99 @@ int WriteSinglePage(
     return 1;
 }
 
+
+/// <summary>
+/// Renders every distinct small frame in the capsule suite as a same-size symbol on one tightly
+/// packed lattice.
+/// </summary>
+/// <remarks>
+/// <para>A printed page is a lattice of identical symbols a few modules apart, and that regularity
+/// is itself a detection hazard: finder patterns from neighbouring symbols line up into triples
+/// that look like a symbol's own, so a detector meets far more plausible candidates than there are
+/// symbols. A reader that lets the failed candidates count against a result cap decodes little or
+/// nothing from such a page. The multi-code vector has three well-separated symbols and cannot
+/// show this.</para>
+///
+/// <para>A full sheet needs more symbols than the positive vectors hold, so the payloads are every
+/// distinct non-empty frame pinned anywhere in the suite, negative vectors included. The image
+/// layer only transports bytes and this vector stops after QR decoding, so a frame the capsule
+/// layer would reject is as good a payload here as one it accepts. Every symbol is forced to one
+/// version so they are the same size, as on a real sheet, whatever their payload length. Frames
+/// too large for that version are left out.</para>
+/// </remarks>
+int WriteDensePage(string id, string title, params string[] suiteRoots)
+{
+    var frames = new List<byte[]>();
+    var seen = new HashSet<string>(StringComparer.Ordinal);
+
+    foreach (string framePath in suiteRoots
+                 .SelectMany(root => Directory.GetDirectories(root).OrderBy(x => x, StringComparer.Ordinal))
+                 .SelectMany(directory => Directory.GetFiles(directory, "*.bpq").OrderBy(x => x, StringComparer.Ordinal)))
+    {
+        byte[] frame = File.ReadAllBytes(framePath);
+        if (frame.Length > 0 && frame.Length <= DensePageRenderer.MaxFrameBytes && seen.Add(Sha256Hex(frame)))
+        {
+            frames.Add(frame);
+        }
+    }
+
+    if (frames.Count < DensePageRenderer.Columns * 4)
+    {
+        throw new InvalidOperationException($"{id}: only {frames.Count} frame(s) fit; the page would not be dense.");
+    }
+
+    (byte[] page, byte[] pixels, int width, int height) = DensePageRenderer.Render(frames);
+
+    string directory = Path.Combine(outputRoot, "1.0", "images", id);
+    Directory.CreateDirectory(directory);
+    File.WriteAllBytes(Path.Combine(directory, "page-0.png"), page);
+
+    // The vector is only worth its bytes if it reproduces the hazard. A single whole-page read that
+    // reports failed detections under a result cap is what used to fall short on a dense page; if
+    // this lattice does not defeat that read, it is not dense enough to pin anything.
+    int crowdedRead = DensePageRenderer.CountCrowdedRead(pixels, width, height);
+    if (crowdedRead >= frames.Count)
+    {
+        throw new InvalidOperationException(
+            $"{id}: a capped read that reports failed detections still decoded all {frames.Count} codes, "
+            + "so the page does not exercise candidate crowding.");
+    }
+
+    // The cheap whole-page stage alone must read all of it - this is a clean rendering, not a
+    // photograph - and so must the full pipeline.
+    foreach (bool rectify in new[] { false, true })
+    {
+        PageImageResult result = new PageImageReader(new ImagePolicy { RectifySymbols = rectify }).Read("page-0.png", page);
+        var decoded = result.Symbols.Select(s => s.Payload).ToList();
+        if (decoded.Count != frames.Count || frames.Any(f => !decoded.Any(d => d.AsSpan().SequenceEqual(f))))
+        {
+            throw new InvalidOperationException(
+                $"{id}: rendered {frames.Count} code(s) but decoded {decoded.Count} "
+                + $"({(rectify ? "full pipeline" : "whole-page stage only")}; {result.Failure}).");
+        }
+    }
+
+    WriteImageManifest(directory, id, "image", title, "page-0.png", page,
+        new JsonObject
+        {
+            ["result"] = "success",
+            ["frameCount"] = frames.Count,
+            ["frames"] = new JsonArray([.. frames.Select(f => (JsonNode)new JsonObject
+            {
+                ["length"] = f.Length,
+                ["sha256"] = Sha256Hex(f)
+            })])
+        },
+        $"every distinct non-empty frame of at most {DensePageRenderer.MaxFrameBytes} bytes in the positive "
+        + $"and negative vectors, in path order, each as a version-{DensePageRenderer.Version} ECC M symbol, "
+        + $"{DensePageRenderer.Columns} per row, {DensePageRenderer.GapModules}-module gaps, "
+        + $"{DensePageRenderer.ModuleSize}px per module, format Png",
+        "positive + negative");
+
+    Console.WriteLine($"  {id}: {frames.Count} code(s) on one lattice, decoded byte-exact "
+        + $"(a capped read reporting failed detections decodes {crowdedRead})");
+    return 1;
+}
 
 /// <summary>
 /// Renders a page and then destroys one code, so a reader must recover from what is left.

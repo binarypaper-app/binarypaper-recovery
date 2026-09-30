@@ -1,0 +1,297 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "formatMajor": 1,
+    "formatMinor": 0
+  },
+  "id": "image-dense-page-png",
+  "category": "image",
+  "title": "A full sheet of equal-size codes packed as tightly as a printed page. A whole-page read must decode every one of them, however many candidate finder patterns the lattice offers.",
+  "operation": "decode-image",
+  "inputs": [
+    {
+      "path": "page-0.png",
+      "length": 358327,
+      "sha256": "aa0f908847b8b23664c024987cede12b07d520c28257cd0fb57defb3348c45de",
+      "role": "page-image"
+    }
+  ],
+  "requires": [
+    "image-decoding"
+  ],
+  "expected": {
+    "result": "success",
+    "frameCount": 66,
+    "frames": [
+      {
+        "length": 151,
+        "sha256": "b1b0b727662289dadabf0728978d30add786f7d09e29f73a2354a659ff36f44f"
+      },
+      {
+        "length": 151,
+        "sha256": "2c0ba49febbf91cdcc2352de512a595e1e3c2b4ef77d2192798cff31ea9b56fb"
+      },
+      {
+        "length": 151,
+        "sha256": "26e1a7702fe2e07e5434390b79cd5292afa717140f23b50270929ebd6507f879"
+      },
+      {
+        "length": 151,
+        "sha256": "2db96ad4a9bbf4eeb6f2e0ebc97bed386106b8a733279f24e5bf6d875ceaa095"
+      },
+      {
+        "length": 279,
+        "sha256": "fa63da7421b74adb679716fcad67160d4f0659898051008ff64ab3d6118f6174"
+      },
+      {
+        "length": 279,
+        "sha256": "1235ca1a1cd4a446a0231e712320a44412a509fec4af9f43215f2e8ba785eb55"
+      },
+      {
+        "length": 279,
+        "sha256": "bf15c007d8dc5260b0c004837e40ba36049a9316b9189537a0279dec623f5651"
+      },
+      {
+        "length": 31,
+        "sha256": "5a3eda13e86dc6af66a3006aad35e4ae60b214cc58c4a525484dcbe141c406fc"
+      },
+      {
+        "length": 57,
+        "sha256": "00fd7cb7822fd4845dffc8db1940a45fdf31685083df09f3a5eb3ca65f2c2b8d"
+      },
+      {
+        "length": 57,
+        "sha256": "2e32d089a327659d0d3db9416e63776bf47dbe803e3a8e109cd61dce2fd33017"
+      },
+      {
+        "length": 57,
+        "sha256": "1787b77120231d64aea6b6ea405b09839a3722e2dd8c6f8af831789c8c80801f"
+      },
+      {
+        "length": 57,
+        "sha256": "56dd487befc2040883c953c6d458a35714c375965901f2e6102e7b4306fea255"
+      },
+      {
+        "length": 57,
+        "sha256": "f277dd0982468635a870f6a1e57e0736110f6f739922c3d1ef60aafac620c79b"
+      },
+      {
+        "length": 57,
+        "sha256": "e2d2177fc0f4e57e93268a8fe05d6c95c16239f45d92f8e24076eb27650be6c1"
+      },
+      {
+        "length": 57,
+        "sha256": "d9c1f03803831933f89e4f5f6b260fbc0b1c2a5c00323a14a5f6086af8c420e9"
+      },
+      {
+        "length": 57,
+        "sha256": "e402e93e9364303ec8fb64f690626df55dbb90903875b2f4254d12d960ac0cb1"
+      },
+      {
+        "length": 57,
+        "sha256": "b00ae4f94865f4fd2d47d0129407b293484f721bc831a4aa12a0e0c8c3c096d4"
+      },
+      {
+        "length": 57,
+        "sha256": "bc90f7e5592227a75658abf1379d45ae604bcc1cf3e20e1e9b03d96fb60d7753"
+      },
+      {
+        "length": 57,
+        "sha256": "e1d585356d2df876d025ff25838280b395e2ada31fd72d3c06b1ef104c0b3748"
+      },
+      {
+        "length": 57,
+        "sha256": "78da65a1c809e24b0e243d858546a8471388e3dea87248ba5059f6155878d8ee"
+      },
+      {
+        "length": 57,
+        "sha256": "b7534306a8fb2c47e52dd3ac8b64387a8699dc169e4300dde7470189fb5a2886"
+      },
+      {
+        "length": 57,
+        "sha256": "6f0f3af122aad645bf447d0d65c46577e1cf77fa6cf383e9505a8a0c303f5c00"
+      },
+      {
+        "length": 57,
+        "sha256": "623faf6f9036e01b09cb7b8727891ca7a0f44895d542a5fdeb880c967d51e009"
+      },
+      {
+        "length": 57,
+        "sha256": "3535526b7ca74927dc083c8d61748a6d9da27a189ddc57833209a67ce4fe0c4d"
+      },
+      {
+        "length": 145,
+        "sha256": "794815dce51366313f12113156579a079fd9797887b536abdc43c6941670214d"
+      },
+      {
+        "length": 145,
+        "sha256": "34e018e0ab76ad46ffc2327a7b17331132e1eaeb3a461677a736344ae49980db"
+      },
+      {
+        "length": 145,
+        "sha256": "d61c6db0bab5e00c3584d6d3f3a645b49c90083254c14736b88364c0e9d93fa2"
+      },
+      {
+        "length": 151,
+        "sha256": "fb3fdaa7afc18332c41672b39b793333e67d1a4c38813cb91bcad1d5f193936d"
+      },
+      {
+        "length": 151,
+        "sha256": "862db194222c36e387897c51972da95f94ac74f9e009bb9328c64f075459c0d5"
+      },
+      {
+        "length": 151,
+        "sha256": "32196c3e61e73eb1f929d4f202e5142513689c9a7c84e8abc2acfd656a722b88"
+      },
+      {
+        "length": 279,
+        "sha256": "bf89b97a2925a620ca9a157ff73f0132d7e9441f6a9d7d8ec80f831187ee64ef"
+      },
+      {
+        "length": 151,
+        "sha256": "51a3d1d7a005ad65e3ea41f65d33774993da7232b1e32a24c4a2636572c63432"
+      },
+      {
+        "length": 279,
+        "sha256": "7b9b86c75f9907b5d71620035df2981d20826f0960b7e86cc1efe8392de0e5fb"
+      },
+      {
+        "length": 31,
+        "sha256": "37a756087bcc33dbc898d5438a31fc303035a890ced585c36b0ede5216c0a9eb"
+      },
+      {
+        "length": 31,
+        "sha256": "98e5c576d99646b8c609b19bce4278675047e875c040c92539c19a12c7770949"
+      },
+      {
+        "length": 30,
+        "sha256": "ac81b423e1a804e560470b70233fc6aac3e97b66a6cb4bec8b7dd1aaa80cdc1e"
+      },
+      {
+        "length": 31,
+        "sha256": "a513c49b6d9b0a2f5bea463813b84fd5c83acc06c809010a2848f52ba56efc93"
+      },
+      {
+        "length": 33,
+        "sha256": "291f1d3853ef756117154ab8fdebfd6464b1932af0a5305dcef3952c7451ddf6"
+      },
+      {
+        "length": 29,
+        "sha256": "3d9c751130bec9e4ea1d5c549c8fc7ce491518ed6040bef227f34c68267e0055"
+      },
+      {
+        "length": 10,
+        "sha256": "8c80a0d763f0984183b4b68fe92854715497abcf5604832769fb6fcdf85b2c02"
+      },
+      {
+        "length": 25,
+        "sha256": "b75d65161820e4a1ec97b99fea3a1c8ce566957f1c6b6e8b91cd90cc2c3ce97e"
+      },
+      {
+        "length": 31,
+        "sha256": "8a172b2576eb40299916f56c042fc40eb9451a85117079845b10d424ae994722"
+      },
+      {
+        "length": 31,
+        "sha256": "fe8163f82867638867c1cc022742f208ea5930cb13acdfa898ef5f360e0fb7a4"
+      },
+      {
+        "length": 31,
+        "sha256": "eb68e70cee4fa1952668ee0e9d3a551b14b9fc6b8c4a45c90a4e4a492df4c5f3"
+      },
+      {
+        "length": 31,
+        "sha256": "3bb28d337309419dbb7cbc6d0dd6e4f721d88add0740782ce864d5a03afc5838"
+      },
+      {
+        "length": 31,
+        "sha256": "b222545e3b36f74718f82e4c216f8488979a54842273e1b3affbe40409840801"
+      },
+      {
+        "length": 31,
+        "sha256": "da0959f7c5f47ce1825603eec0628b0265303c9cc4b4ef341053eda566a60701"
+      },
+      {
+        "length": 23,
+        "sha256": "839d632339721efa2783c77451d37c5a0de3759ae643eff90112c3d651802b9a"
+      },
+      {
+        "length": 279,
+        "sha256": "ee8e2e796a93a7951fd5903ffeb840325b115acc397e6be91ce0b81a4481a249"
+      },
+      {
+        "length": 279,
+        "sha256": "f9f9e5540b1b29c72b70fbb4b55c897a2f5301aeabc9f7ee91ec9277053ec9ee"
+      },
+      {
+        "length": 279,
+        "sha256": "56d1010c53d67cd2ffd69583e189313da905ab470a4a17ae042e787482696fd4"
+      },
+      {
+        "length": 279,
+        "sha256": "c7facf72402a89b6ec9083b8b6379e34176746613e5b2e44f3d2b8a4fbcfc321"
+      },
+      {
+        "length": 279,
+        "sha256": "5cf60898c492a366f25b638b73154fcce161fd51966909b1831a9953cedb860f"
+      },
+      {
+        "length": 279,
+        "sha256": "0a2fc42a1e5aa68b5b514eb891a0e7cb42767d9511eacf3f8fb2355fd0d3b482"
+      },
+      {
+        "length": 279,
+        "sha256": "c7ddcc5963565e49f684eac421cd8e8a5b0c37f361ff428a75f588ddec1e335b"
+      },
+      {
+        "length": 279,
+        "sha256": "0244d3c7c2a81a53409aba41a5a9d91f90199163a7c45d61861bb098534f8e64"
+      },
+      {
+        "length": 279,
+        "sha256": "9755225f3ee23712ea2259ef07b63fb68e4d74babeef504ecad215592126aa3a"
+      },
+      {
+        "length": 279,
+        "sha256": "5f9d6711ca2f6c1c4d893e1c5de9ce196b7a63a024e4006a9f066a2b189bf05d"
+      },
+      {
+        "length": 151,
+        "sha256": "f71d251254875acc9df587a73927aa672b29dbce51a568b58b070df5c88361bf"
+      },
+      {
+        "length": 151,
+        "sha256": "ed3f8841f0daf7b0385cd95dfb30ddc09f9c3eae1805fe466316704da2f13c1a"
+      },
+      {
+        "length": 151,
+        "sha256": "192b092bf62b1519a3d5d10874054f00e5816bdc6bd9c129c1be61c0e7b51ed8"
+      },
+      {
+        "length": 151,
+        "sha256": "48e042d0eb5ad30c3b3330b784b3984917252249283a3e98085a3d707c9f3390"
+      },
+      {
+        "length": 279,
+        "sha256": "100a56e5d1312c0962364a852505114c1a2f0e61e8aacbf6e14c673d525ee96e"
+      },
+      {
+        "length": 279,
+        "sha256": "1a2fcdf924c402fb93ef9df6a07a2e91139ccefca3b753a33d17f44598d512d9"
+      },
+      {
+        "length": 151,
+        "sha256": "a14903853cd97ddba4d6031b9acb1d0f22ee96e99b192fa4e1cc2ff9bc4bb854"
+      },
+      {
+        "length": 151,
+        "sha256": "c9da29b6d076be61616136026c54210eec0b87f37c3b92c76ade0cb7d93d54c2"
+      }
+    ]
+  },
+  "provenance": {
+    "generator": "BinaryPaper.Recovery.ImageVectors",
+    "recipe": "every distinct non-empty frame of at most 1000 bytes in the positive and negative vectors, in path order, each as a version-26 ECC M symbol, 7 per row, 6-module gaps, 3px per module, format Png",
+    "derivedFrom": "positive \u002B negative"
+  }
+}

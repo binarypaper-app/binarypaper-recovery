@@ -10,6 +10,9 @@
          part worth testing directly: a vector can only reach them through a whole page. -->
     <InternalsVisibleTo Include="BinaryPaper.Recovery.Tests" />
     <InternalsVisibleTo Include="page-yield" />
+    <!-- The image-vector generator checks that a fixture reproduces the detector hazard it pins,
+         through the same pinned native boundary the reader uses. -->
+    <InternalsVisibleTo Include="image-vectors" />
   </ItemGroup>
 
   <ItemGroup>

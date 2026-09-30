@@ -5,7 +5,7 @@
     "formatMinor": 0
   },
   "schema": "schema/vector-manifest.schema.json",
-  "vectorCount": 54,
+  "vectorCount": 55,
   "vectors": [
     {
       "id": "image-binary-payload-png",
@@ -18,6 +18,12 @@
       "category": "image-negative",
       "manifest": "1.0/images/image-damaged-code-recoverable/manifest.json",
       "sha256": "3f018e80df29bf1f588962ec704d5b0dfe6dfd617433c2ae7140433a00eb3fcd"
+    },
+    {
+      "id": "image-dense-page-png",
+      "category": "image",
+      "manifest": "1.0/images/image-dense-page-png/manifest.json",
+      "sha256": "f1c09fb38750d7aa39fc8f77e97e23211fccf8f34a6b6fd019923bdacd1d1fb4"
     },
     {
       "id": "image-jpeg",

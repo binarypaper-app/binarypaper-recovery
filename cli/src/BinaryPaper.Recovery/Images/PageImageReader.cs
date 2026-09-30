@@ -200,15 +200,43 @@ public sealed class PageImageReader(ImagePolicy? policy = null, Action<PageImage
         // A BinaryPaper page is dark-on-light. Searching for the inverse doubles the work for a
         // case the format never produces.
         TryInvert = false,
-        MaxNumberOfSymbols = MaxSymbolsPerRead,
+        MaxNumberOfSymbols = returnErrors ? MaxSymbolsPerLocatingRead : MaxSymbolsPerRead,
         ReturnErrors = returnErrors,
         Binarizer = binarizer,
     };
 
-    private const int MaxSymbolsPerRead = 64;
+    /// <summary>
+    /// Result cap for a read that only admits symbols which decoded cleanly.
+    /// </summary>
+    /// <remarks>
+    /// The decoder's own ceiling. Each result here passed Reed-Solomon, so the count is bounded by
+    /// what is really printed on the page rather than by what a crafted image can suggest.
+    /// </remarks>
+    private const int MaxSymbolsPerRead = 255;
+
+    /// <summary>
+    /// Result cap for a read that also reports detections which failed to decode.
+    /// </summary>
+    /// <remarks>
+    /// Failed detections are cheap to fabricate, so this read stays capped low. It is never the only
+    /// read of a plane that reported one: see stage 1 for why.
+    /// </remarks>
+    private const int MaxSymbolsPerLocatingRead = 64;
 
     /// <summary>How far the neighbour prediction is allowed to walk out from a decoded symbol.</summary>
     private const int LatticePasses = 4;
+
+    /// <summary>
+    /// A predicted cell with less than this fraction of its parent symbol's texture is blank paper.
+    /// </summary>
+    /// <remarks>
+    /// Measured with <see cref="PageFilter.Texture"/>: decoded symbols scored 38 to 84, both on
+    /// clean renderings and on photographs of a screen; predicted cells on blank margin or over a
+    /// line of page text scored 0 to 10 on clean renderings, and 12 to 55 on the photographs, where
+    /// nothing is skipped. A symbol is unreadable long before three quarters of its texture is
+    /// gone, since that means most of its modules are missing, so the fraction costs no symbol.
+    /// </remarks>
+    private const double BlankCellTextureFraction = 0.25;
 
     private List<DecodedSymbol> DecodeSymbols(
         string source, byte[] grey, int width, int height, Stopwatch clock, out bool truncated)
@@ -275,6 +303,19 @@ public sealed class PageImageReader(ImagePolicy? policy = null, Action<PageImage
         // Cheap, and on a clean scan it is the whole job. On a photograph it mostly serves to locate
         // symbols: a detection that failed to decode still carries a usable position, and stage 2
         // needs somewhere to start.
+        //
+        // Locating and decoding are separate reads, because asking the decoder for failed
+        // detections changes what it decodes. It tries candidate finder-pattern triples in its own
+        // order, and every triple that fails is reported and counts against the result cap. On a
+        // densely packed page most triples are made of finder patterns from two or three
+        // neighbouring symbols, so failures fill the cap before the real symbols are reached: a
+        // clean rendering of a 63-symbol page decoded nothing at all. A read that admits only clean
+        // decodes cannot be crowded out that way.
+        //
+        // Without stage 2 nothing uses a position, so the locating read is not made at all. With
+        // it, the decoding read is only repeated when the locating read reported a failure: a
+        // clean page is read exactly once per pass, as it always was.
+        bool locate = _policy.RectifySymbols;
         var cells = new List<Quad>();
         foreach (double sigma in new[] { 0.0, 1.4 })
         {
@@ -282,16 +323,27 @@ public sealed class PageImageReader(ImagePolicy? policy = null, Action<PageImage
 
             foreach (Binarizer binarizer in new[] { Binarizer.LocalAverage, Binarizer.GlobalHistogram })
             {
-                using ReaderOptions options = Options(binarizer, returnErrors: true);
-                NativeBarcodeReader.Read(plane, width, height, ImageFormat.Lum, options, barcode =>
+                bool failedDetection = false;
+
+                using (ReaderOptions options = Options(binarizer, returnErrors: locate))
                 {
-                    Accept(barcode);
-                    Quad? quad = Quad.From(barcode.Position);
-                    if (quad is not null && quad.Side >= MinimumSymbolSide && !IsNear(cells, quad))
+                    NativeBarcodeReader.Read(plane, width, height, ImageFormat.Lum, options, barcode =>
                     {
-                        cells.Add(quad);
-                    }
-                });
+                        failedDetection |= !barcode.IsValid;
+                        Accept(barcode);
+                        AddCell(cells, barcode);
+                    });
+                }
+
+                if (locate && failedDetection && !Expired())
+                {
+                    using ReaderOptions options = Options(binarizer, returnErrors: false);
+                    NativeBarcodeReader.Read(plane, width, height, ImageFormat.Lum, options, barcode =>
+                    {
+                        Accept(barcode);
+                        AddCell(cells, barcode);
+                    });
+                }
 
                 Report();
 
@@ -317,14 +369,16 @@ public sealed class PageImageReader(ImagePolicy? policy = null, Action<PageImage
             return symbols;
         }
 
-        var work = cells;
+        // A located cell is always tried: something was detected there. A predicted one carries the
+        // least texture it must show to be worth trying, set by the decoded symbol it came from.
+        List<(Quad Cell, double MinimumTexture)> work = [.. cells.Select(c => (c, 0.0))];
         var attempted = new List<Quad>();
 
         for (int pass = 0; pass < LatticePasses && work.Count > 0; pass++)
         {
-            var next = new List<Quad>();
+            var next = new List<(Quad Cell, double MinimumTexture)>();
 
-            foreach (Quad cell in work)
+            foreach ((Quad cell, double minimumTexture) in work)
             {
                 if (attempted.Count >= _policy.MaxSymbolAttempts)
                 {
@@ -348,6 +402,17 @@ public sealed class PageImageReader(ImagePolicy? policy = null, Action<PageImage
                 positionsTried++;
                 Report();
 
+                // A predicted cell that lies on blank paper - the margin past the last row, a gap in
+                // a short final row - would otherwise pay the whole rectify ladder, seconds of it,
+                // to find nothing. A cell holding even a washed-out symbol keeps most of the texture
+                // of the symbol that predicted it, because the two sit side by side under the same
+                // light, so only a cell with a small fraction of that texture is passed over.
+                double texture = PageFilter.Texture(grey, width, height, cell);
+                if (texture < minimumTexture)
+                {
+                    continue;
+                }
+
                 if (!TryDecodeCell(grey, width, height, cell, Accept))
                 {
                     continue;
@@ -355,7 +420,8 @@ public sealed class PageImageReader(ImagePolicy? policy = null, Action<PageImage
 
                 // Only a cell that actually decoded is trusted enough to predict from. Stepping out
                 // from a bad quad would spread its error across the page.
-                next.AddRange(cell.Neighbours(width, height));
+                double neighbourMinimum = texture * BlankCellTextureFraction;
+                next.AddRange(cell.Neighbours(width, height).Select(n => (n, neighbourMinimum)));
             }
 
             work = next;
@@ -423,6 +489,15 @@ public sealed class PageImageReader(ImagePolicy? policy = null, Action<PageImage
     /// small that the whole-page pass has already read it as well as it ever will.
     /// </summary>
     private const int MinimumSymbolSide = 250;
+
+    private static void AddCell(List<Quad> cells, Barcode barcode)
+    {
+        Quad? quad = Quad.From(barcode.Position);
+        if (quad is not null && quad.Side >= MinimumSymbolSide && !IsNear(cells, quad))
+        {
+            cells.Add(quad);
+        }
+    }
 
     private static bool IsNear(List<Quad> quads, Quad candidate)
     {
@@ -653,6 +728,33 @@ internal static class PageFilter
         }
 
         return output;
+    }
+
+    /// <summary>
+    /// How busy <paramref name="quad"/> is: the mean luminance step between adjacent samples on a
+    /// grid of one sample per module of the largest symbol.
+    /// </summary>
+    /// <remarks>
+    /// Blank paper, a lighting gradient and sensor noise all move little from one sample to the
+    /// next; a field of modules moves a large part of the page's contrast at almost every step. It
+    /// scales with contrast, so it is only meaningful compared against a neighbour under the same
+    /// light, never against a fixed number.
+    /// </remarks>
+    public static double Texture(byte[] source, int width, int height, Quad quad)
+    {
+        const int n = 177;
+        byte[] warp = Warp(source, width, height, quad, n, 0);
+        long sum = 0;
+        for (int y = 0; y < n; y++)
+        {
+            for (int x = 1; x < n; x++)
+            {
+                sum += Math.Abs(warp[(y * n) + x] - warp[(y * n) + x - 1]);
+                sum += Math.Abs(warp[(x * n) + y] - warp[((x - 1) * n) + y]);
+            }
+        }
+
+        return sum / (2.0 * n * (n - 1));
     }
 
     private static byte Bilinear(byte[] source, int width, int height, double x, double y)

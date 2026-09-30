@@ -99,6 +99,15 @@ their payloads contain `0x00` and are not valid UTF-8 in any encoding. A reader 
 text-recoding bug fails that one vector while every text-friendly vector still passes,
 which is what makes the failure diagnosable instead of mysterious.
 
+`image-dense-page-png` is a full sheet: 66 same-size version-26 symbols, seven to a row,
+six modules apart. That regularity is a detection hazard of its own, because corner
+markers from neighbouring symbols line up into triples that look exactly like a
+symbol's own. It is still a clean rendering, so a reader that implements image
+decoding MUST decode every symbol on it, the same as on the three-symbol page. Its
+payloads are every distinct non-empty frame pinned elsewhere in the suite, negative
+vectors included: the vector stops after QR decoding, so a frame the capsule layer
+would reject is as good a payload as one it accepts.
+
 The images are rendered deterministically from the frame bytes at fixed module size, quiet
 zone, rotation and JPEG quality, so regenerating reproduces them byte-for-byte.
 
@@ -113,7 +122,7 @@ Running them the other way round drops the image entries from the aggregate mani
 
 ## Coverage
 
-54 vectors: **7 positive**, **40 negative**, **5 image** and **2 image-negative**.
+55 vectors: **7 positive**, **40 negative**, **6 image** and **2 image-negative**.
 
 | Family | Count | What it pins |
 | --- | --- | --- |
@@ -125,7 +134,7 @@ Running them the other way round drops the image entries from the aggregate mani
 | `session-*` | 2 | Session identity and duplicate handling |
 | `compression-*` | 2 | Malformed compressed input |
 | `profile-*`, `resource-*`, `recovery-*` | 3 | Profile refusal, resource refusal, insufficient frames |
-| image | 5 | PNG and JPEG decoding: a single page, a rotated page, a multi-code page, a binary payload |
+| image | 6 | PNG and JPEG decoding: a single page, a rotated page, a multi-code page, a binary payload, a full dense sheet |
 | image-negative | 2 | An unreadable code beside recoverable repair symbols; mixed capsules across images |
 
 Every rejection stage the specification defines has at least one vector. Coverage is not

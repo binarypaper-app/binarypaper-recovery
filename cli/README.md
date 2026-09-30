@@ -65,11 +65,19 @@ Two passes, and most runs only need the first.
 **The sweep.** Every page image is read whole, at two levels of softening and two ways of deciding
 black from white. On a scan, and on most photographs, this reads the page and the run ends here.
 
+A full sheet is a lattice of identical codes a few modules apart, and the corner markers of
+neighbouring codes line up into triples that look exactly like one code's own. The decoder tries
+those false triples too, so the sweep asks it only for codes that decode cleanly: a read that also
+reported every failed candidate could fill its result limit with them before reaching the real
+codes, and before this was fixed a clean 63-code page read none at all.
+
 **The closer look.** If the codes collected still are not enough to recover the capsule, every page
 is read again — this time locating each candidate symbol, straightening it as though seen head-on,
 retrying it across sampling densities and softening levels, and using symbols that decode to
 predict where their neighbours must be. That last part recovers symbols whose own corner markers
-were never found, which is what a photograph taken at an angle tends to lose.
+were never found, which is what a photograph taken at an angle tends to lose. A predicted position
+that is plainly blank paper — the margin past the last row of codes — is passed over rather than
+retried, since retrying nothing is the most expensive thing this pass can do.
 
 The split matters because the second pass is roughly eight times the cost of the first and earns
 nothing when the first already read the page. It rescues symbols the detector located but could not
