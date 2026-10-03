@@ -13,7 +13,16 @@ never replaced or deleted.
 
 ## [Unreleased]
 
-Still recovers **capsule wire version 1.0**. No wire meaning changes.
+## [recovery-kit-v1.0.1]
+
+A patch release. Still recovers **capsule wire version 1.0**. No wire meaning changes,
+and the specification and every earlier conformance vector are byte-identical to
+`recovery-kit-v1.0.0`; one image vector is added.
+
+Released by the `recovery-kit-v1.0.1` tag; the release page carries the date, the
+archives, their checksums and their build provenance. `recovery-kit-v1.0.0` is not
+withdrawn: it recovers everything it recovered before, but it reads a full, densely packed
+page image incompletely (first item below), so prefer 1.0.1 for page images.
 
 ### Fixed
 
